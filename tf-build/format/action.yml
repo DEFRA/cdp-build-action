@@ -20,7 +20,7 @@ runs:
 
     - name: Post Format
       if: always() && github.ref != 'refs/heads/main' && steps.format.outcome == 'success' || steps.format.outcome == 'failure'
-      uses: Jimdo/terraform-pr-commenter@v1.6.0
+      uses: GetTerminus/terraform-pr-commenter@v3
       with:
         commenter_type: fmt
         commenter_input: ${{ format('{0}{1}', steps.format.outputs.stdout, steps.format.outputs.stderr) }}

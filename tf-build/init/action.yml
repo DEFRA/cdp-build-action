@@ -26,7 +26,7 @@ runs:
 
     - name: Post init
       if: always() && github.ref != 'refs/heads/main' && steps.init.outcome == 'success' || steps.init.outcome == 'failure'
-      uses: Jimdo/terraform-pr-commenter@v1.6.0
+      uses: GetTerminus/terraform-pr-commenter@v3
       with:
         commenter_type: init
         commenter_input: ${{ format('{0}{1}', steps.init.outputs.stdout, steps.init.outputs.stderr) }}
