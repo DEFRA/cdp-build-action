@@ -25,4 +25,3 @@ runs:
         commenter_type: validate
         commenter_input: ${{ format('{0}{1}', steps.validate.outputs.stdout, steps.validate.outputs.stderr) }}
         commenter_exitcode: ${{ steps.validate.outputs.exitcode }}
-        commenter_comment: "Environment: ${{ env.ENVIRONMENT }}"

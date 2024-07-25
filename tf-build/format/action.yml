@@ -25,4 +25,3 @@ runs:
         commenter_type: fmt
         commenter_input: ${{ format('{0}{1}', steps.format.outputs.stdout, steps.format.outputs.stderr) }}
         commenter_exitcode: ${{ steps.format.outputs.exitcode }}
-        commenter_comment: "Environment: ${{ env.ENVIRONMENT }}"

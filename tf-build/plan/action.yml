@@ -26,4 +26,3 @@ runs:
         commenter_plan_path: tf_plan.txt
         #commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
         commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
-        commenter_comment: "Environment: ${{ env.ENVIRONMENT }}"

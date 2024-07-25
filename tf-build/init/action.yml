@@ -31,4 +31,3 @@ runs:
         commenter_type: init
         commenter_input: ${{ format('{0}{1}', steps.init.outputs.stdout, steps.init.outputs.stderr) }}
         commenter_exitcode: ${{ steps.init.outputs.exitcode }}
-        commenter_comment: "Environment: ${{ env.ENVIRONMENT }}"
