@@ -56,9 +56,13 @@ runs:
         username: ${{ env.CDP_PLATFORM_GH_ACTIONS_DEFRADIGITAL_DOCKER_HUB_USERNAME}}
         password: ${{ env.CDP_PLATFORM_GH_ACTIONS_DEFRADIGITAL_DOCKER_HUB_TOKEN }}
 
+    - name: List tags
+      shell: bash
+      run: git tag --list --merged HEAD --sort=-committerdate --format='%(refname:strip=2) - %(objectname) - %(committerdate)'
+        
     - name: auto-version
       id: version
-      uses: anothrNick/github-tag-action@1.67.0
+      uses: anothrNick/github-tag-action@1.71.0
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         WITH_V: false
@@ -87,7 +91,7 @@ runs:
 
     - name: commit-version
       if: inputs.push
-      uses: anothrNick/github-tag-action@1.67.0
+      uses: anothrNick/github-tag-action@1.71.0
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         WITH_V: false
