@@ -2,6 +2,14 @@ name: 'CDP Docker Login'
 description: 'Logs into Docker Hub'
 
 inputs:
+  iam-role-name:
+    description: Role to assume to retrieve docker credentials from Secrets Manager
+  aws-region:
+    description: AWS region
+    default: eu-west-2
+  aws-account-id:
+    description: AWS account id
+    default: "094954420758"
   secret-manager-docker-credentials:
     description: Secret containing json with Docker credentials. Must contain docker_token and docker_username.
     default: cdp/platform/gh_actions
@@ -9,10 +17,18 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-region: ${{ inputs.aws-region }}
+        role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/${{ inputs.iam-role-name }}
+
+    - run: aws sts get-caller-identity
+      shell: bash
 
     # Get Docker secrets from Secrets Manager
     - name: Get Github Actions secrets from Secrets Manager
-      uses: aws-actions/aws-secretsmanager-get-secrets@v1
+      uses: aws-actions/aws-secretsmanager-get-secrets@v2
       with:
         secret-ids: |
           ,${{ inputs.secret-manager-docker-credentials }}
