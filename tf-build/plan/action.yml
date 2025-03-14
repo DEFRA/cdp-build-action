@@ -11,11 +11,21 @@ runs:
   using: "composite"
   steps:
     # Generates an execution plan for Terraform
+    # - name: Terraform Plan
+    #   id: plan
+    #   run: |
+    #     cd ${{ inputs.tf_path }}
+    #     terraform plan -input=false -var-file environments/${{ env.ENVIRONMENT }}/terraform.tfvars -compact-warnings -out=${{ env.ENVIRONMENT }}.plan.file |& tee tf_plan.txt
+    #   shell: bash
+
     - name: Terraform Plan
       id: plan
       run: |
         cd ${{ inputs.tf_path }}
-        terraform plan -input=false -var-file environments/${{ env.ENVIRONMENT }}/terraform.tfvars -compact-warnings -out=${{ env.ENVIRONMENT }}.plan.file |& tee tf_plan.txt
+        # Capture both stdout and stderr into a file named with the ENVIRONMENT var
+        terraform plan -input=false -var-file environments/${{ env.ENVIRONMENT }}/terraform.tfvars -compact-warnings -out=${{ env.ENVIRONMENT }}.plan.file |& tee ${{ env.ENVIRONMENT }}.full_tf_plan.txt
+        # Truncate the full output to 130,000 bytes for PR commenting
+        head -c 130000 ${{ env.ENVIRONMENT }}.full_tf_plan.txt > tf_plan.txt
       shell: bash
 
     - name: Post Plan
