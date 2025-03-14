@@ -22,10 +22,12 @@ runs:
       id: plan
       run: |
         cd ${{ inputs.tf_path }}
-        # Capture both stdout and stderr into a file named with the ENVIRONMENT var
-        terraform plan -input=false -var-file environments/${{ env.ENVIRONMENT }}/terraform.tfvars -compact-warnings -out=${{ env.ENVIRONMENT }}.plan.file |& tee ${{ env.ENVIRONMENT }}.full_tf_plan.txt
-        # Truncate the full output to 130,000 bytes for PR commenting
-        head -c 130000 ${{ env.ENVIRONMENT }}.full_tf_plan.txt > tf_plan.txt
+        # Create the binary plan file (used for apply, etc.)
+        terraform plan -input=false -var-file environments/${{ env.ENVIRONMENT }}/terraform.tfvars -compact-warnings -out=${{ env.ENVIRONMENT }}.plan.file
+        # Generate a human-readable plan from the binary file with color codes.
+        TF_FORCE_COLOR=1 terraform show ${env.ENVIRONMENT}.plan.file | tee ${env.ENVIRONMENT}.full_tf_plan.txt
+        # Truncate the colored output to 130,000 bytes for safe PR commenting.
+        head -c 130000 ${env.ENVIRONMENT}.full_tf_plan.txt > tf_plan.txt
       shell: bash
 
     - name: Post Plan
