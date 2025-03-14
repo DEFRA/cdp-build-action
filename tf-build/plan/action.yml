@@ -11,31 +11,18 @@ runs:
   using: "composite"
   steps:
     # Generates an execution plan for Terraform
-    # - name: Terraform Plan
-    #   id: plan
-    #   run: |
-    #     cd ${{ inputs.tf_path }}
-    #     terraform plan -input=false -var-file environments/${{ env.ENVIRONMENT }}/terraform.tfvars -compact-warnings -out=${{ env.ENVIRONMENT }}.plan.file |& tee tf_plan.txt
-    #   shell: bash
-
     - name: Terraform Plan
       id: plan
       run: |
         cd ${{ inputs.tf_path }}
-        # Create the binary plan file (used for apply, etc.)
         terraform plan -input=false -var-file environments/${{ env.ENVIRONMENT }}/terraform.tfvars -compact-warnings -out=${{ env.ENVIRONMENT }}.plan.file
-        # Generate a human-readable plan from the binary file with color codes.
-        TF_FORCE_COLOR=1 terraform show ${env.ENVIRONMENT}.plan.file | tee ${env.ENVIRONMENT}.full_tf_plan.txt
-        # Truncate the colored output to 130,000 bytes for safe PR commenting.
-        head -c 130000 ${env.ENVIRONMENT}.full_tf_plan.txt > tf_plan.txt
       shell: bash
 
-    - name: Post Plan
-      if: always() && github.ref != 'refs/heads/main' && steps.plan.outcome == 'success' || steps.plan.outcome == 'failure'
-      uses: GetTerminus/terraform-pr-commenter@v3
-      env:
-        TF_WORKSPACE: ${{ env.ENVIRONMENT }}
-      with:
-        commenter_type: plan
-        commenter_plan_path: tf_plan.txt
-        commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
+    #- name: Post Plan
+    # if: always() && github.ref != 'refs/heads/main' && steps.plan.outcome == 'success' || steps.plan.outcome == 'failure'
+    # uses: Jimdo/terraform-pr-commenter@v1.6.0
+    # with:
+    #   commenter_type: plan
+    #   commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
+    #   commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
+    #   commenter_comment: "Environment: ${{ env.ENVIRONMENT }}"
