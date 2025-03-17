@@ -4,6 +4,7 @@ description: 'Logs into Docker Hub'
 inputs:
   iam-role-name:
     description: Role to assume to retrieve docker credentials from Secrets Manager
+    default: github-${{ github.event.repository.name }}-build-role
   aws-region:
     description: AWS region
     default: eu-west-2
