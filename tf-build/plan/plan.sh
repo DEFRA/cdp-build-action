@@ -20,9 +20,10 @@ else
   echo "plan_is_large=false" >> "$GITHUB_OUTPUT"
 fi
 
-echo "plan_text<<EOF" >> "$GITHUB_OUTPUT"
-cat "${ENVIRONMENT}.tf_plan.txt" >> "$GITHUB_OUTPUT"
-echo "EOF" >> "$GITHUB_OUTPUT"
-echo "exitcode=$EXITCODE" >> "$GITHUB_OUTPUT"
+{
+  printf "plan_text<<PLAN_OUTPUT\n"
+  cat "${ENVIRONMENT}.tf_plan.txt"
+  printf "\nPLAN_OUTPUT\n"
+} >> "$GITHUB_OUTPUT"
 
 exit $EXITCODE
