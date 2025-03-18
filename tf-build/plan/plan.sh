@@ -14,7 +14,7 @@ MAX_SIZE=131072  # 128 KiB
 if [ "$FILE_SIZE" -gt "$MAX_SIZE" ]; then
   echo "plan_is_large=true" >> "$GITHUB_OUTPUT"
   KB_SIZE=$(($FILE_SIZE / 1024))
-  echo "❗ **Terraform plan output is too large (${KB_SIZE} KiB)**." > "${ENVIRONMENT}.tf_plan.txt"
+  echo "❗ **Terraform plan output for ${ENVIRONMENT} environment is too large (${KB_SIZE} KiB)**." > "${ENVIRONMENT}.tf_plan.txt"
   echo "Please check the full plan in the [GitHub Actions run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)" >> "${ENVIRONMENT}.tf_plan.txt"
 else
   echo "plan_is_large=false" >> "$GITHUB_OUTPUT"
