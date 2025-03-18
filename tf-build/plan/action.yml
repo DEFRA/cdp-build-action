@@ -13,16 +13,20 @@ runs:
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       id: plan
-      run: |
-        cd ${{ inputs.tf_path }}
-        terraform plan -input=false -var-file environments/${{ env.ENVIRONMENT }}/terraform.tfvars -compact-warnings -out=${{ env.ENVIRONMENT }}.plan.file
       shell: bash
+      run: |
+        ${{ github.action_path }}/plan.sh "${{ inputs.tf_path }}"
 
-    #- name: Post Plan
-    # if: always() && github.ref != 'refs/heads/main' && steps.plan.outcome == 'success' || steps.plan.outcome == 'failure'
-    # uses: Jimdo/terraform-pr-commenter@v1.6.0
-    # with:
-    #   commenter_type: plan
-    #   commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
-    #   commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
-    #   commenter_comment: "Environment: ${{ env.ENVIRONMENT }}"
+    - name: Post Comment if Plan is Large
+      if: steps.plan.outputs.plan_is_large == 'true'
+      shell: bash
+      run: |
+        gh pr comment ${{ github.event.pull_request.number }} --body "$(cat ${{ env.ENVIRONMENT }}.tf_plan.txt)"
+
+    - name: Post Comment if Plan is Normal
+      if: steps.plan.outputs.plan_is_large == 'false'
+      uses: DEFRA/cdp-terraform-pr-commenter@master
+      with:
+        commenter_type: plan
+        commenter_input: ${{ steps.plan.outputs.plan_text }}
+        commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
