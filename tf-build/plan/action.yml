@@ -25,7 +25,7 @@ runs:
 
     - name: Post Comment if Plan is Normal
       if: steps.plan.outputs.plan_is_large == 'false'
-      uses: DEFRA/cdp-terraform-pr-commenter@master
+      uses: DEFRA/cdp-terraform-pr-commenter@switch-to-defra-github-url
       env:
         TF_WORKSPACE: ${{ env.ENVIRONMENT }}
       with:
