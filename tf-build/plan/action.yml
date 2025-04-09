@@ -20,11 +20,13 @@ runs:
     - name: Post Comment if Plan is Large
       if: steps.plan.outputs.plan_is_large == 'true'
       shell: bash
+      continue-on-error: true
       run: |
         gh pr comment ${{ github.event.pull_request.number }} --body "$(cat ${{ env.ENVIRONMENT }}.tf_plan.txt)"
 
     - name: Post Comment if Plan is Normal
       if: steps.plan.outputs.plan_is_large == 'false'
+      continue-on-error: true
       uses: DEFRA/cdp-terraform-pr-commenter@master
       env:
         TF_WORKSPACE: ${{ env.ENVIRONMENT }}
