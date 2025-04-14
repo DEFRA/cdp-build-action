@@ -26,6 +26,7 @@ runs:
 
     - name: Post init
       if: always() && github.ref != 'refs/heads/main' && steps.init.outcome == 'success' || steps.init.outcome == 'failure'
+      continue-on-error: true
       uses: DEFRA/cdp-terraform-pr-commenter@master
       with:
         commenter_type: init
