@@ -20,6 +20,7 @@ runs:
 
     - name: Post Format
       if: always() && github.ref != 'refs/heads/main' && steps.format.outcome == 'success' || steps.format.outcome == 'failure'
+      continue-on-error: true
       uses: DEFRA/cdp-terraform-pr-commenter@master
       with:
         commenter_type: fmt

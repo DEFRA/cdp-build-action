@@ -20,6 +20,7 @@ runs:
 
     - name: Post Validate
       if: always() && github.ref != 'refs/heads/main' && steps.validate.outcome == 'success' || steps.validate.outcome == 'failure'
+      continue-on-error: true
       uses: DEFRA/cdp-terraform-pr-commenter@master
       with:
         commenter_type: validate
