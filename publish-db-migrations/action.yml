@@ -7,11 +7,11 @@ inputs:
     description: 'path to the migration script folder'
     required: true
   version:
-    description: 'overrides auto-versioning'
+    description: Manually set 
     required: false
     default: ''
   service-name:
-    description: 'name of service to publish db  to push (defaults to repo name)'
+    description: Name of service to publish db  to push (defaults to repo name)
     required: false
     default: ${{ github.event.repository.name }}
   bucket:
@@ -21,6 +21,9 @@ inputs:
   github-token:
     description: Github Token, required for autoversioning
     required: false
+  force:
+    description: Publish
+    default: ''
 
 runs:
   using: "composite"
@@ -44,20 +47,50 @@ runs:
         WITH_V: false
         DRY_RUN: true
 
+    - name: Set VERSION_TAG
+      id: set-version-tag
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.version }}" ]; then
+          echo "Using provided version: ${{ inputs.version }}"
+          echo "VERSION_TAG=${{ inputs.version }}" >> "$GITHUB_ENV"
+        else
+          echo Using latest versio tag: ${{ steps.version.outputs.tag }}"
+          echo "VERSION_TAG=${{ steps.version.outputs.tag }}" >> "$GITHUB_ENV"
+        fi
+
     - name: Check if migrations folder exists and contains files
       shell: bash
       run: |
-        if [ ! -d "${{ inputs.path }}" ]; then
-        echo "❌ The path '${{ inputs.folder-path }}' does not exist or is not a directory."
-        exit 1
+        if [ ! -d "${{ inputs.path }}" ];
+          echo "❌ The path '${{ inputs.folder-path }}' does not exist or is not a directory."
+          exit 1
         fi
 
         if [ -z "$(find "${{ inputs.path }}" -type f -print -quit)" ]; then
-        echo "❌ The directory '${{ inputs.path }}' does not contain any files."
-        exit 1
+          echo "❌ The directory '${{ inputs.path }}' does not contain any files."
+          exit 1
+        fi
+        echo "✅ Directory '${{ inputs.path }}' exists and contains at least one file."
+
+    - name: Skip if no changes in folder
+      if: inputs.force != ''
+      shell: bash
+      run: |
+        echo "Checking for changes in '${{ inputs.folder-path }}'..."
+        if git diff --quiet origin/main...HEAD -- "${{ inputs.folder-path }}"; then
+          echo "No changes detected in '${{ inputs.folder-path }}'. Exiting early."
+          exit 0
         fi
 
-        echo "✅ Directory '${{ inputs.path }}' exists and contains at least one file."
+    - name: Exit early if folder hasn't changed
+      shell: bash
+      run: |
+        echo "Checking for changes in '${{ inputs.folder-path }}'..."
+        if git diff --quiet HEAD^ HEAD -- "${{ inputs.folder-path }}"; then
+          echo "No changes detected in '${{ inputs.folder-path }}'. Exiting early."
+          exit 0
+        fi
 
     - name: Create tar.gz archive with preserved folder structure
       shell: bash
@@ -67,9 +100,8 @@ runs:
 
     - name: Copy migrations tgz to S3
       shell: bash
-      env:
-        VERSION_TAG: ${{ steps.version.outputs.tag }}
       run: |
         echo "Publishing schema version ${VERSION_TAG}"
         aws s3 cp output/migrations.tgz "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
+        echo "### Published database schema version: \`${VERSION_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
 
