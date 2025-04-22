@@ -59,9 +59,10 @@ runs:
       run: |
           echo "VERSION_TAG=${{ steps.version.outputs.tag }}" >> "$GITHUB_ENV"
 
-    - name: Check if migrations folder exists and contains files
+    - name: Upload the database migration to S3
       shell: bash
       run: |
+        # Check the path is set correctly
         if [ ! -d "${{ inputs.path }}" ]; then
           echo "❌ The path '${{ inputs.path }}' does not exist or is not a directory."
           exit 1
@@ -73,26 +74,21 @@ runs:
         fi
         echo "✅ Directory '${{ inputs.path }}' exists and contains at least one file."
 
-    - name: Skip if no changes in folder
-      shell: bash
-      run: |
+        # Check if there eare any changes in this commit
         echo "Checking for changes in '${{ inputs.path }}'..."
         git fetch --tags --unshallow
         BASE_COMMIT=$(git merge-base HEAD HEAD^)
         if git diff --quiet "$BASE_COMMIT" HEAD -- "${{ inputs.path }}"; then
-          echo "No changes detected."
+          echo "No changes detected. Nothing to publish. You can override this with the force option."
+          echo "### No schema changes detected" >> "$GITHUB_STEP_SUMMARY"
           exit 0
         fi
 
-    - name: Create tar.gz archive with preserved folder structure
-      shell: bash
-      run: |
+        # Create the migrations archive
         mkdir -p output
         tar -czf output/migrations.tgz -C "${{ inputs.path }}" .
 
-    - name: Copy migrations tgz to S3
-      shell: bash
-      run: |
+        # Upload it to S3
         echo "Publishing schema version ${VERSION_TAG}"
         aws s3 cp output/migrations.tgz "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
         echo "### Published database schema version: \`${VERSION_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
