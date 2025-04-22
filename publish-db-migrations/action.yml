@@ -80,7 +80,7 @@ runs:
         BASE_COMMIT=$(git merge-base HEAD HEAD^)
         if git diff --quiet "$BASE_COMMIT" HEAD -- "${{ inputs.path }}"; then
           echo "No changes detected. Nothing to publish. You can override this with the force option."
-          echo "### No schema changes detected" >> "$GITHUB_STEP_SUMMARY"
+          echo "### No updates to ${{ inputs.path }} detected.\nNo new database migrations were published." >> "$GITHUB_STEP_SUMMARY"
           exit 0
         fi
 
@@ -91,5 +91,5 @@ runs:
         # Upload it to S3
         echo "Publishing schema version ${VERSION_TAG}"
         aws s3 cp output/migrations.tgz "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
-        echo "### Published database schema version: \`${VERSION_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "### Published new database schema migration\nVersion: \`${VERSION_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
 
