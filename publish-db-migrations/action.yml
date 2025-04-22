@@ -68,7 +68,8 @@ runs:
     - name: Copy migrations tgz to S3
       shell: bash
       env:
-        VERSION: ${{ steps.version.outputs.tag }}
+        VERSION_TAG: ${{ steps.version.outputs.tag }}
       run: |
+        echo "Publishing schema version ${VERSION_TAG}"
         aws s3 cp output/migrations.tgz "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
 
