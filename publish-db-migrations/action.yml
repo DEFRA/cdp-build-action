@@ -4,10 +4,10 @@ description: 'Publishes and versions liquibase migration files to to S3.'
 
 inputs:
   path:
-    description: 'path to the migration script folder'
+    description: Path to the database migration files
     required: true
   version:
-    description: Manually set 
+    description: Override version number
     required: false
     default: ''
   service-name:
@@ -63,7 +63,7 @@ runs:
       shell: bash
       run: |
         if [ ! -d "${{ inputs.path }}" ]; then
-          echo "❌ The path '${{ inputs.folder-path }}' does not exist or is not a directory."
+          echo "❌ The path '${{ inputs.path }}' does not exist or is not a directory."
           exit 1
         fi
 
@@ -76,9 +76,10 @@ runs:
     - name: Skip if no changes in folder
       shell: bash
       run: |
-        echo "Checking for changes in '${{ inputs.folder-path }}'..."
-        if git diff --quiet HEAD^ HEAD -- "${{ inputs.folder-path }}"; then
-          echo "No changes detected in '${{ inputs.folder-path }}'. Exiting early."
+        echo "Checking for changes in '${{ inputs.path }}'..."
+        BASE_COMMIT=$(git merge-base HEAD HEAD^)
+        if git diff --quiet "$BASE_COMMIT" HEAD -- "${{ inputs.path }}"; then
+          echo "No changes detected."
           exit 0
         fi
 
