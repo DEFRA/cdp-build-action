@@ -62,7 +62,7 @@ runs:
     - name: Check if migrations folder exists and contains files
       shell: bash
       run: |
-        if [ ! -d "${{ inputs.path }}" ];
+        if [ ! -d "${{ inputs.path }}" ]; then
           echo "❌ The path '${{ inputs.folder-path }}' does not exist or is not a directory."
           exit 1
         fi
