@@ -17,13 +17,13 @@ inputs:
   bucket:
     description: S3 bucket to upload to
     required: true
-    default: "cdp-infra-dev-database-migrations"
+    default: "cdp-management-database-migrations"
   github-token:
     description: Github Token, required for autoversioning
     required: false
   force:
     description: Publish
-    default: ''
+    default: false
 
 runs:
   using: "composite"
@@ -38,11 +38,6 @@ runs:
     - run: aws sts get-caller-identity
       shell: bash
 
-    - name: Set version from override
-      shell: bash
-      run: |
-        echo "VERSION_TAG=${{ inputs.version }}" >> "$GITHUB_ENV"
-
     - name: Get current version
       id: version
       if: inputs.version == ''
@@ -51,13 +46,6 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         WITH_V: false
         DRY_RUN: true
-
-    - name: Sets the current version if not overrriden
-      id: set-version-tag
-      if: inputs.version == ''
-      shell: bash
-      run: |
-          echo "VERSION_TAG=${{ steps.version.outputs.tag }}" >> "$GITHUB_ENV"
 
     - name: Upload the database migration to S3
       shell: bash
@@ -75,13 +63,17 @@ runs:
         echo "✅ Directory '${{ inputs.path }}' exists and contains at least one file."
 
         # Check if there eare any changes in this commit
-        echo "Checking for changes in '${{ inputs.path }}'..."
-        git fetch --tags --unshallow
-        BASE_COMMIT=$(git merge-base HEAD HEAD^)
-        if git diff --quiet "$BASE_COMMIT" HEAD -- "${{ inputs.path }}"; then
-          echo "No changes detected. Nothing to publish. You can override this with the force option."
-          echo "### No updates to ${{ inputs.path }} detected.\nNo new database migrations were published." >> "$GITHUB_STEP_SUMMARY"
-          exit 0
+
+
+        if [ ${{ inputs.force == "false" ]; then
+          echo "Checking for changes in '${{ inputs.path }}'..."
+          git fetch --tags --unshallow
+          BASE_COMMIT=$(git merge-base HEAD HEAD^)
+          if git diff --quiet "$BASE_COMMIT" HEAD -- "${{ inputs.path }}"; then
+            echo "No changes detected. Nothing to publish. You can override this with the force option."
+            echo "### No updates to ${{ inputs.path }} detected.\nNo new database migrations were published." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
         fi
 
         # Create the migrations archive
@@ -89,6 +81,8 @@ runs:
         tar -czf output/migrations.tgz -C "${{ inputs.path }}" .
 
         # Upload it to S3
+        VERSION_TAG="${{ steps.version.outputs.tag || inputs.version }}"
+
         echo "Publishing schema version ${VERSION_TAG}"
         aws s3 cp output/migrations.tgz "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
         echo "### Published new database schema migration\nVersion: \`${VERSION_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
