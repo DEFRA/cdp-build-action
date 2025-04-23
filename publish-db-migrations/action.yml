@@ -63,9 +63,7 @@ runs:
         echo "✅ Directory '${{ inputs.path }}' exists and contains at least one file."
 
         # Check if there eare any changes in this commit
-
-
-        if [ ${{ inputs.force == "false" ]; then
+        if [ ${{ inputs.force }} == "false" ]; then
           echo "Checking for changes in '${{ inputs.path }}'..."
           git fetch --tags --unshallow
           BASE_COMMIT=$(git merge-base HEAD HEAD^)
