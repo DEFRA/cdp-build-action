@@ -65,13 +65,19 @@ runs:
         # Check if there eare any changes in this commit
         if [ ${{ inputs.force }} == "false" ]; then
           echo "Checking for changes in '${{ inputs.path }}'..."
-          git fetch --unshallow || echo "Repo already unshallowed"
-          BASE_COMMIT=$(git merge-base HEAD HEAD^)
-          if git diff --quiet "$BASE_COMMIT" HEAD -- "${{ inputs.path }}"; then
-            echo "No changes detected. Nothing to publish. You can override this with the force option."
+
+          git fetch --unshallow || true
+          git fetch origin "${{ github.event.before }}" "${{ github.sha }}"
+
+          if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- "${{ inputs.path }}"; then
+            echo "No changes detected in '${{ inputs.path }}'. Nothing to publish."
             echo "### No updates to ${{ inputs.path }} detected.\nNo new database migrations were published." >> "$GITHUB_STEP_SUMMARY"
             exit 0
+          else
+            echo "✅ Changes detected in '${{ inputs.path }}'. Proceeding with upload."
           fi
+          else
+            echo "⚠️ Force publish enabled. Skipping change check."
         fi
 
         # Create the migrations archive
