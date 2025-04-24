@@ -1,6 +1,6 @@
 name: 'CDP Publish Database Migrations'
 
-description: 'Publishes and versions liquibase migration files to to S3.'
+description: 'Publishes and versions liquibase migration files to S3.'
 
 inputs:
   path:
@@ -65,7 +65,7 @@ runs:
         # Check if there eare any changes in this commit
         if [ ${{ inputs.force }} == "false" ]; then
           echo "Checking for changes in '${{ inputs.path }}'..."
-          git fetch --tags --unshallow
+          git fetch --unshallow || echo "Repo already unshallowed"
           BASE_COMMIT=$(git merge-base HEAD HEAD^)
           if git diff --quiet "$BASE_COMMIT" HEAD -- "${{ inputs.path }}"; then
             echo "No changes detected. Nothing to publish. You can override this with the force option."
@@ -79,7 +79,11 @@ runs:
         tar -czf output/migrations.tgz -C "${{ inputs.path }}" .
 
         # Upload it to S3
-        VERSION_TAG="${{ steps.version.outputs.tag || inputs.version }}"
+
+        VERSION_TAG="${{ inputs.version }}"
+        if [ -z "$VERSION_TAG" ]; then
+          VERSION_TAG="${{ steps.version.outputs.tag }}"
+        fi
 
         echo "Publishing schema version ${VERSION_TAG}"
         aws s3 cp output/migrations.tgz "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
