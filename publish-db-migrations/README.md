@@ -58,3 +58,5 @@ It’s used to tag the repository when the version is incremented
 
 By default the action will only publish the database migrations if the files set in `path` have changed.
 Setting the `force` flag ignores this check and publishes a new version regardless of weather the files have changed or not.
+
+

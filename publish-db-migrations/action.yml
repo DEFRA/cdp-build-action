@@ -52,15 +52,15 @@ runs:
       run: |
         # Check the path is set correctly
         if [ ! -d "${{ inputs.path }}" ]; then
-          echo "❌ The path '${{ inputs.path }}' does not exist or is not a directory."
+          echo "The path '${{ inputs.path }}' does not exist or is not a directory."
           exit 1
         fi
 
         if [ -z "$(find "${{ inputs.path }}" -type f -print -quit)" ]; then
-          echo "❌ The directory '${{ inputs.path }}' does not contain any files."
+          echo "The directory '${{ inputs.path }}' does not contain any files."
           exit 1
         fi
-        echo "✅ Directory '${{ inputs.path }}' exists and contains at least one file."
+        echo "Directory '${{ inputs.path }}' exists and contains at least one file."
 
         # Check if there eare any changes in this commit
         if [ ${{ inputs.force }} == "false" ]; then
@@ -74,10 +74,10 @@ runs:
             echo "### No updates to ${{ inputs.path }} detected.\nNo new database migrations were published." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           else
-            echo "✅ Changes detected in '${{ inputs.path }}'. Proceeding with upload."
+            echo "Changes detected in '${{ inputs.path }}'. Proceeding with upload."
           fi
           else
-            echo "⚠️ Force publish enabled. Skipping change check."
+            echo "Force publish enabled. Skipping change check."
         fi
 
         # Create the migrations archive
