@@ -82,7 +82,7 @@ runs:
 
         # Create the migrations archive
         mkdir -p output
-        tar -czf output/migrations.tgz -C "${{ inputs.path }}" .
+        tar -czf output/migrations.tgz "${{ inputs.path }}" .
 
         # Upload it to S3
 
