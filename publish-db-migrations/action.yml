@@ -1,0 +1,97 @@
+name: 'CDP Publish Database Migrations'
+
+description: 'Publishes and versions liquibase migration files to S3.'
+
+inputs:
+  path:
+    description: Path to the database migration files
+    required: true
+  version:
+    description: Override version number
+    required: false
+    default: ''
+  service-name:
+    description: Name of service to publish db  to push (defaults to repo name)
+    required: false
+    default: ${{ github.event.repository.name }}
+  bucket:
+    description: S3 bucket to upload to
+    required: true
+    default: "cdp-management-database-migrations"
+  github-token:
+    description: Github Token, required for autoversioning
+    required: false
+  force:
+    description: Publish
+    default: false
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: ${{ env.AWS_REGION }}
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-${{ inputs.service-name }}-build-role
+
+    - run: aws sts get-caller-identity
+      shell: bash
+
+    - name: Get current version
+      id: version
+      if: inputs.version == ''
+      uses: anothrNick/github-tag-action@1.67.0
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        WITH_V: false
+        DRY_RUN: true
+
+    - name: Upload the database migration to S3
+      shell: bash
+      run: |
+        # Check the path is set correctly
+        if [ ! -d "${{ inputs.path }}" ]; then
+          echo "The path '${{ inputs.path }}' does not exist or is not a directory."
+          exit 1
+        fi
+
+        if [ -z "$(find "${{ inputs.path }}" -type f -print -quit)" ]; then
+          echo "The directory '${{ inputs.path }}' does not contain any files."
+          exit 1
+        fi
+        echo "Directory '${{ inputs.path }}' exists and contains at least one file."
+
+        # Check if there eare any changes in this commit
+        if [ ${{ inputs.force }} == false ]; then
+          echo "Checking for changes in '${{ inputs.path }}'..."
+
+          git fetch --unshallow || true
+          git fetch origin "${{ github.event.before }}" "${{ github.sha }}"
+
+          if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- "${{ inputs.path }}"; then
+            echo "No changes detected in '${{ inputs.path }}'. Nothing to publish."
+            echo "### No updates to ${{ inputs.path }} detected.\nNo new database migrations were published." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          else
+            echo "Changes detected in '${{ inputs.path }}'. Proceeding with upload."
+          fi
+          else
+            echo "Force publish enabled. Skipping change check."
+        fi
+
+        # Create the migrations archive
+        mkdir -p output
+        tar -cvzf output/migrations.tgz "${{ inputs.path }}"
+
+        # Upload it to S3
+
+        VERSION_TAG="${{ inputs.version }}"
+        if [ -z "$VERSION_TAG" ]; then
+          VERSION_TAG="${{ steps.version.outputs.tag }}"
+        fi
+
+        echo "Publishing schema version ${VERSION_TAG}"
+        aws s3 cp output/migrations.tgz "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
+        echo "### Published new database schema migration\nVersion: \`${VERSION_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
+
