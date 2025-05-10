@@ -71,7 +71,7 @@ runs:
 
           if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- "${{ inputs.path }}"; then
             echo "No changes detected in '${{ inputs.path }}'. Nothing to publish."
-            echo "### No updates to ${{ inputs.path }} detected.\nNo new database migrations were published." >> "$GITHUB_STEP_SUMMARY"
+            echo "No new database migrations were published, ${{ inputs.path }} was not updated" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           else
             echo "Changes detected in '${{ inputs.path }}'. Proceeding with upload."
@@ -84,14 +84,29 @@ runs:
         mkdir -p output
         tar -cvzf output/migrations.tgz "${{ inputs.path }}"
 
-        # Upload it to S3
-
+        # Get the version
         VERSION_TAG="${{ inputs.version }}"
         if [ -z "$VERSION_TAG" ]; then
           VERSION_TAG="${{ steps.version.outputs.tag }}"
         fi
+      
+        # Generate metadata
+        sha256=$(sha256sum output/migrations.tgz | awk '{print $1}')
+        commit=$(git log -n 1 --pretty=format:%H --)
+        jq -n --argjson files "$(find ./changelog -type f -printf '%P\n' | jq -R . | jq -s .)" \
+              --arg version "${VERSION_TAG}" \
+              --arg sha256 "${sha256}" \
+              --arg date "$(date -Is)" \
+              --arg commit "${commit}" \
+              --arg path "${{ inputs.path }} \
+              --arg format "db-migration-metadata:1.0.0"
+              '{format: $format, files: $files, version: $version, sha256: $sha256, date: $date, path: $path, commit: $commit}' > migrations.metadata.json
+
+        # Upload it to S3
+
 
         echo "Publishing schema version ${VERSION_TAG}"
         aws s3 cp output/migrations.tgz "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
-        echo "### Published new database schema migration\nVersion: \`${VERSION_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
+        aws s3 cp output/migrations.metadata.json "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.metadata.json"
+        echo "Published new database schema migration (Version: \`${VERSION_TAG}\`)" >> "$GITHUB_STEP_SUMMARY"
 
