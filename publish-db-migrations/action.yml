@@ -83,7 +83,7 @@ runs:
         # Create the migrations archive
         mkdir -p output
         migrations_file=output/migrations.tgz
-        tar -cvzf migrations_file "${{ inputs.path }}"
+        tar -cvzf "${migrations_file}" "${{ inputs.path }}"
 
         # Get the version
         VERSION_TAG="${{ inputs.version }}"
