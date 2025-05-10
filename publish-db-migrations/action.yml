@@ -82,7 +82,8 @@ runs:
 
         # Create the migrations archive
         mkdir -p output
-        tar -cvzf output/migrations.tgz "${{ inputs.path }}"
+        migrations_file=output/migrations.tgz
+        tar -cvzf migrations_file "${{ inputs.path }}"
 
         # Get the version
         VERSION_TAG="${{ inputs.version }}"
@@ -94,6 +95,8 @@ runs:
         sha256=$(sha256sum output/migrations.tgz | awk '{print $1}')
         commit=$(git log -n 1 --pretty=format:%H --)
         changeset_files="$(find ${{ inputs.path }} -type f -printf '%P\n' | jq -R . | jq -s .)"
+        metadata_file=output/migrations.metadata.json
+
         jq -n --argjson files "${changeset_files}" \
               --arg version "${VERSION_TAG}" \
               --arg sha256 "${sha256}" \
@@ -101,13 +104,13 @@ runs:
               --arg commit "${commit}" \
               --arg path "${{ inputs.path }}" \
               --arg format "db-migration-metadata:1.0.0" \
-              '{format: $format, files: $files, version: $version, sha256: $sha256, date: $date, path: $path, commit: $commit}' > migrations.metadata.json
+              '{format: $format, files: $files, version: $version, sha256: $sha256, date: $date, path: $path, commit: $commit}' > "${metadata_file}"
 
         # Upload it to S3
 
 
         echo "Publishing schema version ${VERSION_TAG}"
-        aws s3 cp output/migrations.tgz "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
-        aws s3 cp output/migrations.metadata.json "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.metadata.json"
+        aws s3 cp "${migrations_file}" "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
+        aws s3 cp "${metadata_file}" "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.metadata.json"
         echo "Published new database schema migration (Version: \`${VERSION_TAG}\`)" >> "$GITHUB_STEP_SUMMARY"
 
