@@ -98,6 +98,7 @@ runs:
         metadata_file=output/migrations.metadata.json
 
         jq -n --argjson files "${changeset_files}" \
+              --arg changelog "db.changelog.xml" \
               --arg version "${VERSION_TAG}" \
               --arg sha256 "${sha256}" \
               --arg date "$(date -Is)" \
