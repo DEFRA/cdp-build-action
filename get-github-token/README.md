@@ -1,6 +1,6 @@
 # CDP get-github-token Action
 
-The `get-github-token` retrives a GitHub app private key from AWS Secret Manager, uses it to get a PAT token and then sets the PAT token as the default git credentials inside the workflow.
+The `get-github-token` retrieves a GitHub app private key from AWS Secret Manager, uses it to get a PAT token and then sets the PAT token as the default git credentials inside the workflow.
 
 This can be used when you need to commit code to a repository that has branch protection enabled.
 The default github workflow secret (i.e. `github.secret`) does not have an ID associated with it, so it cannot be added to the bypass list in the branch protection rules.
