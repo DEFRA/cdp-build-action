@@ -1,0 +1,36 @@
+name: "Get Terraform Lock ID"
+description: "Gets the lock ID of the state for the current configuration"
+
+inputs:
+  lock_key:
+    description: 'DynamoDB LockID (partition key) to target'
+    required: true
+  dynamodb_table:
+    description: 'Name of the DynamoDB lock table'
+    required: true
+outputs:
+  lock_id:
+    description: 'The lock ID of the terraform state configuration'
+    value: ${{ steps.get-lock-info.outputs.lock_id }}
+
+runs:
+  using: "composite"
+  steps:
+    # Checks dynamodb to see if state is locked and return lock id if it is
+    - name: Fetch Lock Info from DynamoDB
+      id: get-lock-info
+      run: |
+        aws dynamodb get-item \
+          --table-name "${{ inputs.dynamodb_table }}" \
+          --key '{"LockID": {"S": "${{ inputs.lock_key }}"}}' \
+          --projection-expression "Info" \
+          --output json > lock_item.json
+        
+        lock_id=$(jq -r '.Item.Info.S | fromjson | .ID' lock_item.json)
+        if [ -z "$lock_id" ] || [ "$lock_id" = "null" ]; then
+          echo "No lock found. Skipping force-unlock."
+          exit 0
+        fi
+        echo "Lock ID found: $lock_id"
+        echo "lock_id=$lock_id" >> "$GITHUB_OUTPUT"
+      shell: bash

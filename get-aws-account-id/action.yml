@@ -1,0 +1,35 @@
+name: 'Get AWS Account ID'
+description: 'Maps environment name to AWS account ID'
+inputs:
+  environment:
+    description: 'Environment name (e.g., dev, test, prod)'
+    required: true
+  account_ids:
+    description: 'Yaml map of environment names to account ids (e.g. dev: 12345678)'
+    required: true
+outputs:
+  account_id:
+    description: 'AWS Account ID for the specified environment'
+    value: ${{ steps.get-account.outputs.account_id }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get AWS Account ID
+      id: get-account
+      shell: bash
+      run: |
+        # Get the environment input (convert to lowercase for consistent matching)
+         ENVIRONMENT=$(echo "${{ inputs.environment }}" | tr '[:upper:]' '[:lower:]')
+        
+         # Look up the account ID
+         ACCOUNT_ID=$(echo "${{ inputs.account_ids }}" | yq ".$ENVIRONMENT")
+        
+         if [ -z "$ACCOUNT_ID" ] || [ "$ACCOUNT_ID" = "null" ]; then
+           echo "Error: No AWS account ID found for environment '$ENVIRONMENT'"
+           echo "Available environments: ${{ inputs.account_ids }}"
+           exit 1
+         fi
+        
+         echo "Found AWS Account ID: $ACCOUNT_ID for environment: $ENVIRONMENT"
+         echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
