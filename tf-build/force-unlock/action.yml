@@ -1,0 +1,22 @@
+name: "CDP Terraform force unlock"
+description: "Removes the lock on the state for the current configuration"
+
+inputs:
+  lock_id:
+    description: 'terraform state lock id'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    # Runs terraform init
+    - name: Terraform - init
+      id: tf-init
+      uses: DEFRA/cdp-build-action/tf-build/init@main
+    # Runs force-unlock
+    - name: Terraform force unlock
+      id: force-unlock
+      run: |
+        echo "Unlocking Terraform lock ID: ${{ inputs.lock_id }}"
+        terraform force-unlock -force ${{ inputs.lock_id }}
+      shell: bash
