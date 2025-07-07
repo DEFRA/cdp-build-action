@@ -14,7 +14,7 @@ runs:
     - name: Terraform - setup
       uses: hashicorp/setup-terraform@v3
       with:
-        terraform_version: "1.7.5"
+        terraform_version: "1.12.2"
 
       # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
