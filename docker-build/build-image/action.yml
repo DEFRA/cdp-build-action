@@ -1,0 +1,19 @@
+name: Build Docker Image
+description: 'Build a Docker Image'
+inputs:
+  image_name:
+    description: Name for the container image
+    required: true
+  tag:
+    description: Tag for the container image
+    default: latest
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Local build
+      run: |
+        echo "Building container docker image"
+        docker build --no-cache --tag ${{ inputs.image_name }}:${{ inputs.tag }} .
+      shell: bash

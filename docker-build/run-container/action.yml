@@ -1,0 +1,27 @@
+name: Run Docker Image as a Container
+description: 'Run a Docker Image as a  Container'
+inputs:
+  image_name:
+    description: Name of the image
+    required: true
+  image_tag:
+    description: Version of the image to run
+    required: true
+  wait_time:
+    description: Time to wait for the container to start (in seconds)
+    default: 5
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run container for testing
+      run: |
+        docker run -d --name ${{ inputs.image_name }} ${{ inputs.image_name }}:${{ inputs.image_tag }}
+      shell: bash
+
+    - name: Wait for container to start
+      run: |
+        echo "Waiting for container to be ready..."
+        sleep ${{ inputs.wait_time }}
+      shell: bash
