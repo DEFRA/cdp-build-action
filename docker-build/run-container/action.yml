@@ -1,5 +1,5 @@
 name: Run Docker Image as a Container
-description: 'Run a Docker Image as a  Container'
+description: 'Run a Docker Image as a Container'
 inputs:
   image_name:
     description: Name of the image
@@ -11,17 +11,36 @@ inputs:
     description: Time to wait for the container to start (in seconds)
     default: 5
     required: false
+  env_vars:
+    description: String containing all env vars (e.g. -e var:value) (optional)
+    default: ''
+    required: false
+  port:
+    description: Port to expose (optional)
+    required: false
+  command:
+    description: Command to run (optional)
+    default: ''
+    required: false
 
 runs:
   using: "composite"
   steps:
     - name: Run container for testing
       run: |
-        docker run -d --name ${{ inputs.image_name }} ${{ inputs.image_name }}:${{ inputs.image_tag }}
+        echo "Starting container..."
+        docker run -d \
+          --name "${{ inputs.image_name }}" \
+          ${{ inputs.env_vars }} \
+          ${{
+            inputs.port && format('-p {0}:{0}', inputs.port) || ''
+          }} \
+          "${{ inputs.image_name }}:${{ inputs.image_tag }}" \
+          ${{ inputs.command }}
       shell: bash
 
     - name: Wait for container to start
       run: |
         echo "Waiting for container to be ready..."
-        sleep ${{ inputs.wait_time }}
+        sleep "${{ inputs.wait_time }}"
       shell: bash
