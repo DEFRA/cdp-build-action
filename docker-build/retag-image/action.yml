@@ -1,0 +1,32 @@
+name: "Re-tag Docker Image"
+description: 'Re-tag a container image based on its commit hash version tag in ECR'
+inputs:
+  aws_account_id:
+    description: AWS Account ID for the ECR repository
+    required: true
+  aws_region:
+    description: AWS Region for the ECR repository, e.g. eu-west-2
+    default: eu-west-2
+    required: true
+  ecr_repo:
+    description: ECR repository name
+    required: true
+  image_name:
+    description: Name of the image to push
+    required: true
+  commit_hash_tag:
+    description: The commit hash tag to re-tag
+    required: true
+  desired_tag:
+    description: The tag to re-tag to
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Re-tag image
+      run: |
+          ECR_IMAGE_NAME=${{ inputs.image_name }}
+          MANIFEST=$(aws ecr batch-get-image --repository-name ${{ inputs.ecr_repo }} --image-ids imageTag=${{ inputs.commit_hash_tag }} --output text --query 'images[].imageManifest')
+          aws ecr put-image --repository-name ${{ inputs.ecr_repo }} --image-tag ${{ inputs.desired_tag }} --image-manifest "${MANIFEST}"
+      shell: bash

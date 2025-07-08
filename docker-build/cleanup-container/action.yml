@@ -1,0 +1,14 @@
+name: Cleanup Container
+description: 'Cleanup a docker container'
+inputs:
+  container_name:
+    description: Name for the container to remove
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cleanup Containers
+      run: |
+        docker stop ${{ inputs.container_name }} && docker rm ${{ inputs.container_name }}
+      shell: bash
