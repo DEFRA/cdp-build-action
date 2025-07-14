@@ -3,7 +3,7 @@ set -e
 
 cd "$1"
 
-terraform plan -input=false -var-file "environments/${ENVIRONMENT}/terraform.tfvars" -compact-warnings -out="${ENVIRONMENT}.plan.file"
+terraform plan -input=false -var-file "environments/${ENVIRONMENT}/terraform.tfvars" -compact-warnings -detailed-exitcode -out="${ENVIRONMENT}.plan.file"
 TF_FORCE_COLOR=1 terraform show "${ENVIRONMENT}.plan.file" | tee "${ENVIRONMENT}.tf_plan.txt"
 EXITCODE=$?
 
