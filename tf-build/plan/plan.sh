@@ -6,6 +6,8 @@ cd "$1"
 terraform plan -input=false -var-file "environments/${ENVIRONMENT}/terraform.tfvars" -compact-warnings -out="${ENVIRONMENT}.plan.file" -detailed-exitcode
 EXITCODE=$?
 
+echo "exit code = $EXITCODE"
+
 TF_FORCE_COLOR=1 terraform show "${ENVIRONMENT}.plan.file" | tee "${ENVIRONMENT}.tf_plan.txt"
 
 # Check the file size of the plan output file
