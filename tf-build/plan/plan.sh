@@ -3,12 +3,9 @@ set -e
 
 cd "$1"
 
-terraform plan -input=false -var-file "environments/${ENVIRONMENT}/terraform.tfvars" -compact-warnings -out="${ENVIRONMENT}.plan.file" -detailed-exitcode
-EXITCODE=$?
-
-echo "exit code = $EXITCODE"
-
+terraform plan -input=false -var-file "environments/${ENVIRONMENT}/terraform.tfvars" -compact-warnings -out="${ENVIRONMENT}.plan.file"
 TF_FORCE_COLOR=1 terraform show "${ENVIRONMENT}.plan.file" | tee "${ENVIRONMENT}.tf_plan.txt"
+EXITCODE=$?
 
 # Check the file size of the plan output file
 FILE_SIZE=$(wc -c < "${ENVIRONMENT}.tf_plan.txt")
@@ -23,13 +20,17 @@ else
   echo "plan_is_large=false" >> "$GITHUB_OUTPUT"
 fi
 
+# Determine whether plan says "No changes."
+if (terraform show "${ENVIRONMENT}.plan.file" |  grep -q "No changes."); then
+  echo "has_changes=false" >> "$GITHUB_OUTPUT"
+else
+  echo "has_changes=true" >> "$GITHUB_OUTPUT"
+fi
+
 {
   printf "plan_text<<PLAN_OUTPUT\n"
   cat "${ENVIRONMENT}.tf_plan.txt"
   printf "\nPLAN_OUTPUT\n"
 } >> "$GITHUB_OUTPUT"
-
-echo "exit code = $EXITCODE"
-echo "exitcode=$EXITCODE" >> "$GITHUB_OUTPUT"
 
 exit $EXITCODE

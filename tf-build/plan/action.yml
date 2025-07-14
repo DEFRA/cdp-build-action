@@ -11,9 +11,9 @@ inputs:
     required: false
     default: true
 outputs:
-  exitcode:
-    description: 'The exit code of terraform plan'
-    value: ${{ steps.plan.outputs.exitcode  }}
+  has_changes:
+    description: 'Whether terraform plan shows changes'
+    value: ${{ steps.plan.outputs.has_changes  }}
 
 runs:
   using: "composite"
