@@ -26,14 +26,14 @@ runs:
         ${{ github.action_path }}/plan.sh "${{ inputs.tf_path }}"
 
     - name: Post Comment if Plan is Large
-      if: steps.plan.outputs.plan_is_large == 'true' && ( inputs.output_plan_with_no_changes == 'true' || steps.plan.outputs.exitcode == '2' )
+      if: steps.plan.outputs.plan_is_large == 'true' && ( inputs.output_plan_with_no_changes == 'true' || steps.plan.outputs.has_changes == 'true' )
       shell: bash
       continue-on-error: true
       run: |
         gh pr comment ${{ github.event.pull_request.number }} --body "$(cat ${{ env.ENVIRONMENT }}.tf_plan.txt)"
 
     - name: Post Comment if Plan is Normal
-      if: steps.plan.outputs.plan_is_large == 'false' && ( inputs.output_plan_with_no_changes == 'true' || steps.plan.outputs.exitcode == '2' )
+      if: steps.plan.outputs.plan_is_large == 'false' && ( inputs.output_plan_with_no_changes == 'true' || steps.plan.outputs.has_changes == 'true' )
       continue-on-error: true
       uses: DEFRA/cdp-terraform-pr-commenter@master
       env:
