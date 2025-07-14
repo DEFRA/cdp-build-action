@@ -10,6 +10,10 @@ inputs:
     description: 'If set to false will not output a plan file if there are no changes'
     required: false
     default: true
+outputs:
+  exitcode:
+    description: 'The exit code of terraform plan'
+    value: ${{ steps.plan.outputs.exitcode  }}
 
 runs:
   using: "composite"
@@ -38,8 +42,3 @@ runs:
         commenter_type: plan
         commenter_input: ${{ steps.plan.outputs.plan_text }}
         commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
-
-outputs:
-  exitcode:
-    description: 'The exit code of terraform plan'
-    value: ${{ steps.plan.outputs.exitcode  }}

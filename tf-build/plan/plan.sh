@@ -26,6 +26,7 @@ fi
   printf "\nPLAN_OUTPUT\n"
 } >> "$GITHUB_OUTPUT"
 
+echo "exit code = $EXITCODE"
 echo "exitcode=$EXITCODE" >> "$GITHUB_OUTPUT"
 
 exit $EXITCODE
