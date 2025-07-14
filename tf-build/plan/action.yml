@@ -38,3 +38,8 @@ runs:
         commenter_type: plan
         commenter_input: ${{ steps.plan.outputs.plan_text }}
         commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
+
+outputs:
+  exitcode:
+    description: 'The exit code of terraform plan'
+    value: ${{ steps.plan.outputs.exitcode  }}

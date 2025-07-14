@@ -26,11 +26,6 @@ fi
   printf "\nPLAN_OUTPUT\n"
 } >> "$GITHUB_OUTPUT"
 
-if [ "$EXITCODE" -eq 2 ]; then
-  echo "has_changes=true" >> "$GITHUB_OUTPUT"
-else
-  echo "has_changes=false" >> "$GITHUB_OUTPUT"
-fi
 echo "exitcode=$EXITCODE" >> "$GITHUB_OUTPUT"
 
 exit $EXITCODE
