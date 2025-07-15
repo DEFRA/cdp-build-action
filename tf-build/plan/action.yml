@@ -6,10 +6,7 @@ inputs:
     description: 'A root directory with Terraform files'
     required: false
     default: '.'
-  output_plan_with_no_changes:
-    description: 'If set to false will not output a plan file if there are no changes'
-    required: false
-    default: true
+
 outputs:
   has_changes:
     description: 'Whether terraform plan shows changes'

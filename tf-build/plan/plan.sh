@@ -20,7 +20,7 @@ else
   echo "plan_is_large=false" >> "$GITHUB_OUTPUT"
 fi
 
-# Determine whether plan says "No changes."
+# We cannot use detailed-exitcode to see if there are no changes due to https://github.com/hashicorp/setup-terraform/issues/328
 if (terraform show "${ENVIRONMENT}.plan.file" |  grep -q "No changes."); then
   echo "has_changes=false" >> "$GITHUB_OUTPUT"
 else
