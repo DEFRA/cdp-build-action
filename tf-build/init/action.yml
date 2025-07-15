@@ -12,7 +12,7 @@ runs:
   steps:
     # Install Terraform CLI pinned version
     - name: Terraform - setup
-      uses: hashicorp/setup-terraform@v3
+      uses: sjpalf/setup-terraform@CORE-363
       with:
         terraform_version: "1.12.2"
 
