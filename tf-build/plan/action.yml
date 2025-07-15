@@ -7,6 +7,11 @@ inputs:
     required: false
     default: '.'
 
+outputs:
+  has_changes:
+    description: 'Whether terraform plan shows changes'
+    value: ${{ steps.plan.outputs.has_changes  }}
+
 runs:
   using: "composite"
   steps:
