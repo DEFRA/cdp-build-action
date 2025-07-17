@@ -8,23 +8,13 @@ inputs:
   targetEnv:
     description: The target environment for the tenant_services.json
     required: true
-  mergeJsonFiles:
-    description: "Merge JSON files to create tenant_services.json"
-    required: false
-    default: false
 runs:
   using: "composite"
   steps:
-    - name: Check if JSON merge needed
-      id: check_merge
-      shell: bash
-      run: echo "merge=${{ inputs.mergeJsonFiles }}" >> $GITHUB_ENV
-
     - name: Construct merged_tenant_services.json from multiple files
-      if: ${{ env.merge == 'true' }}
       shell: bash
       run: |
-        merged_file=environments/${{ inputs.targetEnv }}/resources/merged_tenant_services.json
+        merged_file=environments/${{ inputs.targetEnv }}/merged_tenant_services.json
         echo "[" > $merged_file
 
         first=true
@@ -44,10 +34,7 @@ runs:
       shell: bash
       run: |
         message_id=$(uuidgen)
-        json_file="environments/${{ inputs.targetEnv }}/resources/tenant_services.json"
-        if [[ ${{ env.merge }} == 'true' ]]; then
-          json_file="environments/${{ inputs.targetEnv }}/resources/merged_tenant_services.json"
-        fi
+        json_file="environments/${{ inputs.targetEnv }}/merged_tenant_services.json"
         aws sns publish --topic-arn ${{ inputs.topicArn }}  --message-attributes \
         '{"environment" : { "DataType":"String", "StringValue":"${{ inputs.targetEnv }}"}}' \
         --message file://$json_file \
