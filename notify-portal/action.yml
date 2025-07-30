@@ -1,0 +1,21 @@
+name: Notify Portal World
+description: Generates and publishes change messages to portal
+
+inputs:
+  eventType:
+    description: Type of message to generate
+    required: true
+  path:
+    description: Path of files to generate messages from
+    required: true
+  topic:
+    description: SNS topic to send messages to.
+    required: true
+  environment:
+    description: Which environment to handle (depends on event type)
+    required: false
+
+runs:
+  using: node20
+  main: dist/index.js
+

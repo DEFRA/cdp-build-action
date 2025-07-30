@@ -1,0 +1,7 @@
+{
+  "zone": "protected",
+  "mongo": true,
+  "redis": false,
+  "service_code": "FOO",
+  "queues": ["foo_results_callback.fifo"]
+}
