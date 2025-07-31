@@ -13,6 +13,11 @@ on:
       - synchronize
       - ready_for_review
 
+defaults:
+  run:
+    shell: bash
+    working-directory: ./notify-portal
+
 jobs:
   pr-validator:
     name: Run Pull Request Checks
