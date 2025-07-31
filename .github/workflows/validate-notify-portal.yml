@@ -40,6 +40,7 @@ jobs:
           npm run package
           if ! git diff --quiet -- dist/index.js; then
             echo "::error file=dist/index.js::dist/index.js is out of date. Consider running the build and committing the result."
+            exit 1
           else
             echo "dist/index.js is up to date."
           fi
