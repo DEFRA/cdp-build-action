@@ -38745,8 +38745,7 @@ class PublishCommand extends Command
 }
 
 const client = new SNSClient({
-  region: 'eu-west-2',
-
+  region: 'eu-west-2'
 });
 
 async function sendSnsMessage(
@@ -38755,7 +38754,6 @@ async function sendSnsMessage(
   groupId = 'none',
   deduplicationId = crypto.randomUUID()
 ) {
-
   coreExports.info('preparing sns payload');
   const input = {
     TopicArn: topic,
@@ -38768,7 +38766,6 @@ async function sendSnsMessage(
     input.MessageDeduplicationId = deduplicationId;
     input.MessageGroupId = groupId;
   }
-
 
   const command = new PublishCommand(input);
   const snsResponse = await client.send(command);
@@ -45960,9 +45957,7 @@ async function handle() {
   } else {
     const validationError = validate.errors.map((e) => e.message).join(', ');
     coreExports.error(validationError);
-    throw new Error(
-      `generated an invalid payload, ${validationError}`
-    )
+    throw new Error(`generated an invalid payload, ${validationError}`)
   }
 }
 
