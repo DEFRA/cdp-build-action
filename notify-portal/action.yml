@@ -2,7 +2,7 @@ name: Notify Portal World
 description: Generates and publishes change messages to portal
 
 inputs:
-  eventType:
+  messageType:
     description: Type of message to generate
     required: true
   path:

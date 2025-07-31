@@ -2,7 +2,8 @@ import { PublishCommand, SNSClient } from '@aws-sdk/client-sns'
 import * as core from '@actions/core'
 
 const client = new SNSClient({
-  region: process.env.AWS_REGION ?? 'eu-west-2' // TODO: check if we need this
+  region: 'eu-west-2',
+
 })
 
 export async function sendSnsMessage(
@@ -11,6 +12,8 @@ export async function sendSnsMessage(
   groupId = 'none',
   deduplicationId = crypto.randomUUID()
 ) {
+
+  core.info('preparing sns payload')
   const input = {
     TopicArn: topic,
     Message: JSON.stringify(message, null, 2)
@@ -22,6 +25,7 @@ export async function sendSnsMessage(
     input.MessageDeduplicationId = deduplicationId
     input.MessageGroupId = groupId
   }
+
 
   const command = new PublishCommand(input)
   const snsResponse = await client.send(command)

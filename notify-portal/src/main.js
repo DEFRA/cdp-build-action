@@ -2,15 +2,15 @@ import * as core from '@actions/core'
 
 export async function main(handlers) {
   try {
-    const eventType = core.getInput('eventType')
+    const messageType = core.getInput('messageType')
 
-    if (!handlers[eventType]) {
+    if (!handlers[messageType]) {
       core.setFailed(
-        `Unknown message type ${eventType}. Supported types are: ${Object.keys(handlers).join(', ')}`
+        `Unknown message type ${messageType}. Supported types are: ${Object.keys(handlers).join(', ')}`
       )
     }
-    core.info(`Handling ${eventType}`)
-    await handlers[eventType]()
+    core.info(`Handling ${messageType}`)
+    await handlers[messageType]()
   } catch (error) {
     core.setFailed(error.message)
   }
