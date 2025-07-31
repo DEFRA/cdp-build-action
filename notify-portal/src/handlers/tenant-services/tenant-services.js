@@ -54,9 +54,7 @@ export async function handle() {
   } else {
     const validationError = validate.errors.map((e) => e.message).join(', ')
     core.error(validationError)
-    throw new Error(
-      `generated an invalid payload, ${validationError}`
-    )
+    throw new Error(`generated an invalid payload, ${validationError}`)
   }
 }
 

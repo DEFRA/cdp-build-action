@@ -5,7 +5,7 @@ This action centralises the various scripts used to generate and notify the CDP 
 ## Inputs
 
 | Input       | Description                                                              | Required |
-|-------------|--------------------------------------------------------------------------|----------|
+| ----------- | ------------------------------------------------------------------------ | -------- |
 | messageType | The type of message you want to generate (see below).                    | yes      |
 | path        | The path to the files the action will use to generate the message from   | yes      |
 | topic       | The SNS topic to send the messages to                                    | yes      |
@@ -19,12 +19,11 @@ This action centralises the various scripts used to generate and notify the CDP 
 ## Requirements
 
 ### Node Version
+
 GitHub actions support a limited number of Node versions (currently Node 20).
 Do not update the Node version without checking that it is supported in GitHub actions.
 
 The version of Node used must match the version in `actions.yml`.
-
-
 
 ## Building and Releasing
 
@@ -38,6 +37,7 @@ If you have updated the code but not rebuilt the package the PR validator will w
 
 You can trigger the action locally to test it or use it with portal running locally.
 The GitHub action pulls its inputs from environment variables prefixed with `INPUT`
+
 ```bash
 export INPUT_MESSAGE
 export INPUT_ENVIRONMENT=dev
