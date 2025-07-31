@@ -23,7 +23,7 @@ describe('#main', () => {
 
   test('main calls the correct handler based on input', async () => {
     vi.stubEnv('INPUT_ENVIRONMENT', 'test')
-    vi.stubEnv('INPUT_EVENTTYPE', 'tenant-service')
+    vi.stubEnv('INPUT_MESSAGETYPE', 'tenant-service')
 
     const handlers = { 'tenant-service': vi.fn() }
     await main(handlers)
