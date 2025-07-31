@@ -27,12 +27,15 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: npm
-      - run: npm install
-      - run: npm run format:check
-      - run: npm run lint
-      - run: npm test
+      - name: Lint and test
+        working-directory: notify-portal
+        run: |
+          npm install
+          npm run format:check
+          npm run lint
+          npm test
       - name: Check npm run package has been run
+        working-directory: notify-portal
         run: |
           npm run package
           if ! git diff --quiet -- dist/index.js; then
