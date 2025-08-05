@@ -9,7 +9,7 @@ import { validate } from './schema.js'
 import { envelope } from '../../utils/envelope.js'
 import { isDir } from '../../utils/index.js'
 
-const messageType = 'tenant-services'
+export const messageType = 'tenant-services'
 
 export async function handle() {
   const baseDir = core.getInput('path')
@@ -46,18 +46,13 @@ export async function handle() {
 
   const payload = envelope(messageType, { environment, services })
 
-  if (validate(payload)) {
-    core.info(
-      `Sending ${services.length} tenant services in ${environment} to ${topic}`
-    )
-    await sendSnsMessage(topic, payload)
-  } else {
+  if (!validate(payload)) {
     const validationError = validate.errors.map((e) => e.message).join(', ')
-    core.error(validationError)
     throw new Error(`generated an invalid payload, ${validationError}`)
   }
-}
 
-export const tenantServiceHandler = {
-  [messageType]: handle
+  core.info(
+    `Sending ${services.length} tenant services in ${environment} to ${topic}`
+  )
+  await sendSnsMessage(topic, payload)
 }

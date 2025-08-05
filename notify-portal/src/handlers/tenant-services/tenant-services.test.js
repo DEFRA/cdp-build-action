@@ -13,7 +13,7 @@ describe('handleTenants', () => {
   beforeEach(() => {
     vi.stubEnv(
       'INPUT_PATH',
-      resolve(__dirname, '../__fixtures__/cdp-tf-svc-infra')
+      resolve(__dirname, './__fixtures__/cdp-tf-svc-infra')
     )
   })
 

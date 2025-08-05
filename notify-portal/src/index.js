@@ -1,8 +1,4 @@
 import { main } from './main.js'
-import { tenantServiceHandler } from './handlers/tenant-services/tenant-services.js'
-
-const handlers = {
-  ...tenantServiceHandler
-}
+import handlers from './handlers.js'
 
 await main(handlers)

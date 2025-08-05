@@ -3,7 +3,7 @@ import { Ajv } from 'ajv'
 export const schema = {
   type: 'object',
   properties: {
-    eventType: { type: 'string' },
+    eventType: { const: 'tenant-services' },
     timestamp: { type: 'string' },
     payload: {
       type: 'object',

@@ -14,7 +14,7 @@ describe('#main', () => {
   test('main throws an error when the event type is not supported', async ({
     expect
   }) => {
-    vi.stubEnv('INPUT_EVENTTYPE', 'foo')
+    vi.stubEnv('INPUT_MESSAGETYPE', 'foo')
 
     await main({})
 

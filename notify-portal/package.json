@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
-    "test": "vitest run"
+    "test": "vitest run",
+    "local": "INPUT_TOPIC=arn:aws:sns:eu-west-2:000000000000:cdp_workflow_events node src/utils/run-local.js"
   },
   "keywords": [],
   "author": "Chris Turner",
@@ -22,7 +23,8 @@
     "@aws-sdk/client-sqs": "3.723.0",
     "@aws-sdk/credential-provider-ini": "3.857.0",
     "@aws-sdk/credential-providers": "3.857.0",
-    "ajv": "8.17.1"
+    "ajv": "8.17.1",
+    "minimist": "1.2.8"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "28.0.6",

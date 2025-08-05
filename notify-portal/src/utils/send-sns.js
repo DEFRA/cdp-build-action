@@ -1,4 +1,8 @@
-import { PublishCommand, SNSClient } from '@aws-sdk/client-sns'
+import {
+  ListTopicsCommand,
+  PublishCommand,
+  SNSClient
+} from '@aws-sdk/client-sns'
 import * as core from '@actions/core'
 
 const client = new SNSClient({
@@ -11,7 +15,9 @@ export async function sendSnsMessage(
   groupId = 'none',
   deduplicationId = crypto.randomUUID()
 ) {
+  await listTopics()
   core.info('preparing sns payload')
+
   const input = {
     TopicArn: topic,
     Message: JSON.stringify(message, null, 2)
@@ -28,4 +34,9 @@ export async function sendSnsMessage(
   const snsResponse = await client.send(command)
   core.info(`SNS message MessageId: ${snsResponse?.MessageId}`)
   return snsResponse
+}
+
+async function listTopics() {
+  const command = new ListTopicsCommand()
+  console.log(await client.send(command))
 }
