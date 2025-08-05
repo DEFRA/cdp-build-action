@@ -37065,7 +37065,7 @@ const fromEnv = (init) => async () => {
     throw new CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
 };
 
-var index$b = /*#__PURE__*/Object.freeze({
+var index$8 = /*#__PURE__*/Object.freeze({
 	__proto__: null,
 	ENV_ACCOUNT_ID: ENV_ACCOUNT_ID,
 	ENV_CREDENTIAL_SCOPE: ENV_CREDENTIAL_SCOPE,
@@ -46048,13 +46048,6 @@ async function handle$2() {
   await sendSnsMessage(topic, payload);
 }
 
-var index$a = { handle: handle$2, messageType: messageType$2 };
-
-var tenantServices = /*#__PURE__*/Object.freeze({
-	__proto__: null,
-	default: index$a
-});
-
 /**
  * Finds the latest commit and commit timestamp from a git repo
  * @param {string} baseDir
@@ -46130,13 +46123,6 @@ async function handle$1() {
   await sendSnsMessage(topic, payload);
 }
 
-var index$9 = { handle: handle$1, messageType: messageType$1 };
-
-var appConfig = /*#__PURE__*/Object.freeze({
-	__proto__: null,
-	default: index$9
-});
-
 const schema = {
   type: 'object',
   properties: {
@@ -46184,17 +46170,10 @@ async function handle() {
   await sendSnsMessage(topic, payload);
 }
 
-var index$8 = { handle, messageType };
-
-var appConfigVersion = /*#__PURE__*/Object.freeze({
-	__proto__: null,
-	default: index$8
-});
-
 const handlers = {
-  ...tenantServices,
-  ...appConfig,
-  ...appConfigVersion,
+  'tenant-services': handle$2,
+  'app-config': handle$1,
+  'app-config-version': handle
 };
 
 await main(handlers);
@@ -47040,7 +47019,7 @@ const resolveCredentialSource = (credentialSource, profileName, logger) => {
         },
         Environment: async (options) => {
             logger?.debug("@aws-sdk/credential-provider-ini - credential_source is Environment");
-            const { fromEnv } = await Promise.resolve().then(function () { return index$b; });
+            const { fromEnv } = await Promise.resolve().then(function () { return index$8; });
             return async () => fromEnv(options)().then(setNamedProvider);
         },
     };

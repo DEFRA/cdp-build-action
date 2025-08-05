@@ -1,11 +1,11 @@
-import * as tenantServices from "./handlers/tenant-services/index.js";
-import * as appConfig from "./handlers/app-config/index.js";
-import * as appConfigVersion from "./handlers/app-config-version/index.js";
+import * as tenantServices from './handlers/tenant-services/tenant-services.js'
+import * as appConfig from "./handlers/app-config/app-config.js"
+import * as appConfigVersion from "./handlers/app-config-version/app-config-version.js";
 
 const handlers = {
-  ...tenantServices,
-  ...appConfig,
-  ...appConfigVersion,
+  'tenant-services': tenantServices.handle,
+  'app-config': appConfig.handle,
+  'app-config-version': appConfigVersion.handle
 }
 
 export default handlers
