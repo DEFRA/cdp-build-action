@@ -26,6 +26,10 @@ inputs:
     description: Whether to run container in privileged mode
     default: 'false'
     required: false
+  volumes:
+    description: Docker volume mounts (e.g. "-v /path/on/host:/path/in/container") (optional)
+    default: ''
+    required: false
 
 runs:
   using: "composite"
@@ -36,6 +40,7 @@ runs:
         docker run -d \
           --name "${{ inputs.image_name }}" \
           ${{ inputs.env_vars }} \
+          ${{ inputs.volumes }} \
           ${{
             inputs.port && format('-p {0}:{0}', inputs.port) || ''
           }} \
