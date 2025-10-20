@@ -1,0 +1,47 @@
+name: Check Notify-Portal Pull Request
+
+on:
+  pull_request:
+    paths:
+      - 'notify-portal/**'
+    branches:
+      - main
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+      - ready_for_review
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./notify-portal
+
+jobs:
+  pr-validator:
+    name: Run Pull Request Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Lint and test
+        working-directory: notify-portal
+        run: |
+          npm install
+          npm run format:check
+          npm run lint
+          npm test
+      - name: Check npm run package has been run
+        working-directory: notify-portal
+        run: |
+          npm run package
+          if ! git diff --quiet -- dist/index.js; then
+            echo "::error file=dist/index.js::dist/index.js is out of date. Consider running the build and committing the result."
+            exit 1
+          else
+            echo "dist/index.js is up to date."
+          fi
+

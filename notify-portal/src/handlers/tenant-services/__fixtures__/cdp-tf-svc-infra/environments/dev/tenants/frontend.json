@@ -1,0 +1,6 @@
+{
+  "zone": "public",
+  "mongo": false,
+  "redis": true,
+  "service_code": "FOO"
+}

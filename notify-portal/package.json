@@ -1,0 +1,39 @@
+{
+  "name": "notify-portal",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "package": "npx rollup --config rollup.config.js",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
+    "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
+    "test": "vitest run",
+    "local": "INPUT_TOPIC=arn:aws:sns:eu-west-2:000000000000:cdp_workflow_events node src/utils/run-local.js"
+  },
+  "keywords": [],
+  "author": "Chris Turner",
+  "license": "OGL",
+  "description": "",
+  "dependencies": {
+    "@actions/core": "1.11.1",
+    "@actions/github": "6.0.1",
+    "@actions/glob": "0.5.0",
+    "@aws-sdk/client-sns": "3.856.0",
+    "@aws-sdk/client-sqs": "3.723.0",
+    "@aws-sdk/credential-provider-ini": "3.857.0",
+    "@aws-sdk/credential-providers": "3.857.0",
+    "ajv": "8.17.1",
+    "minimist": "1.2.8"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "28.0.6",
+    "@rollup/plugin-json": "6.1.0",
+    "@rollup/plugin-node-resolve": "16.0.1",
+    "esbuild": "0.25.8",
+    "neostandard": "0.12.2",
+    "prettier": "3.6.2",
+    "rollup": "4.45.1",
+    "vitest": "3.2.4"
+  }
+}
