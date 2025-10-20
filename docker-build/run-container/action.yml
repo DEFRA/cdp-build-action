@@ -22,6 +22,10 @@ inputs:
     description: Command to run (optional)
     default: ''
     required: false
+  privileged:
+    description: Whether to run container in privileged mode
+    default: 'false'
+    required: false
 
 runs:
   using: "composite"
@@ -35,6 +39,7 @@ runs:
           ${{
             inputs.port && format('-p {0}:{0}', inputs.port) || ''
           }} \
+          ${{ inputs.privileged == 'true' && '--privileged' || '' }} \
           "${{ inputs.image_name }}:${{ inputs.image_tag }}" \
           ${{ inputs.command }}
       shell: bash
