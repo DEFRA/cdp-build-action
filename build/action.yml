@@ -84,6 +84,22 @@ runs:
           defra.cdp.run_mode=service
           git.hash=${{ github.sha }}
 
+    - name: Build Dev Layer
+      uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        tags: |
+          defradigital/${{ inputs.image-name }}-dev:latest
+
+    - name: Build SBOMs
+      uses: anchore/sbom-action@v0
+      with:
+        image: defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
+        format: cyclonedx-json
+        upload-artifact: true
+
     - name: commit-version
       if: inputs.version == '' && inputs.push
       uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8
