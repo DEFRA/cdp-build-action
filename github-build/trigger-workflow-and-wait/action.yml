@@ -1,0 +1,79 @@
+name: "Trigger Remote Workflow and Wait"
+description: "Triggers a remote workflow and waits for it to finish"
+inputs:
+  remote_repo:
+    description: "The remote repository in the form owner/repo"
+    required: true
+  remote_workflow:
+    description: "The workflow filename or name to monitor (e.g., build.yml)"
+    required: true
+  poll_interval:
+    description: "How long to wait (in seconds) between checks"
+    default: "10"
+    required: false
+  inputs:
+    description: "String containing all raw fields to pass to gh workflow run (--raw-field name=value) (optional)"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Ensure gh CLI is available
+      shell: bash
+      run: |
+        if ! command -v gh &>/dev/null; then
+          echo "Error: GitHub CLI (gh) not found in PATH." >&2
+          exit 1
+        fi
+
+    - name: Trigger remote workflow
+      id: trigger
+      shell: bash
+      env:
+        REMOTE_REPO: ${{ inputs.remote_repo }}
+        REMOTE_WORKFLOW: ${{ inputs.remote_workflow }}
+      run: |
+        current_epoch=$(date -u +%s)
+
+        gh workflow run "$REMOTE_WORKFLOW" --repo "$REMOTE_REPO" \
+          ${{ inputs.inputs }}
+
+        started=false
+        while [ "$started" = false ]; do
+          sleep 2
+          RUN_JSON=$(gh run list --workflow="$REMOTE_WORKFLOW" --repo "$REMOTE_REPO" \
+            --limit 1 --json databaseId --json startedAt --jq '.[0]')
+          STARTED_AT=$(echo "$RUN_JSON" | jq -r '.startedAt')
+          start_epoch=$(date --date="$STARTED_AT" +%s)
+          if (( start_epoch > current_epoch )); then
+            started=true
+            RUN_ID=$(echo "$RUN_JSON" | jq -r '.databaseId')
+            echo "Triggered workflow with run_id: $RUN_ID"
+            echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+          fi
+        done
+
+    - name: Wait for completion
+      shell: bash
+      env:
+        REMOTE_REPO: ${{ inputs.remote_repo }}
+        RUN_ID: ${{ steps.trigger.outputs.run_id }}
+      run: |
+        INTERVAL=${{ inputs.poll_interval }}
+
+        echo "Waiting for workflow run $RUN_ID to finish ..."
+
+        status=""
+        while [[ "$status" != "completed" ]]; do
+          sleep "$INTERVAL"
+          status=$(gh run view "$RUN_ID" --repo "$REMOTE_REPO" --json status --jq '.status')
+          echo "Workflow status: $status"
+        done
+
+        conclusion=$(gh run view "$RUN_ID" --repo "$REMOTE_REPO" --json conclusion --jq '.conclusion')
+        echo "Completed with conclusion: $conclusion"
+
+        if [[ "$conclusion" != "success" ]]; then
+          echo "Remote workflow failed ($conclusion)."
+          exit 1
+        fi
