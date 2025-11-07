@@ -18,9 +18,12 @@ runs:
       id: commit
       shell: bash
       run: |
+        # Remove leading and trailing spaces
+        branch_name=$(echo "${{ inputs.branch_name }}" | xargs)
+
         # Determine the target branch
-        if [[ -n "${{ inputs.branch_name }}" ]]; then
-          TARGET_BRANCH="${{ inputs.branch_name }}"
+        if [[ -n "${branch_name}" ]]; then
+          TARGET_BRANCH="${branch_name}"
           COMMIT_MESSAGE="${{ inputs.commit_message }}"
         else
           TARGET_BRANCH="$GITHUB_REF"
