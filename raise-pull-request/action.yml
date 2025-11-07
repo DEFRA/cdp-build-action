@@ -29,10 +29,13 @@ runs:
       id: check-pr
       shell: bash
       run: |
+        # Remove leading and trailing spaces
+        branch_name=$(echo "${{ inputs.branch_name }}" | xargs)
+
         # Check if a PR already exists for the branch
-        EXISTING_PR=$(gh pr list --head "${{ inputs.branch_name }}" --json number,url --jq '.[0]')
+        EXISTING_PR=$(gh pr list --head "${branch_name}" --json number,url --jq '.[0]')
         if [[ -n "$EXISTING_PR" ]]; then
-          echo "PR already exists for branch ${{ inputs.branch_name }}."
+          echo "PR already exists for branch ${branch_name}."
           PR_NUMBER=$(echo "$EXISTING_PR" | jq -r '.number')
           PR_URL=$(echo "$EXISTING_PR" | jq -r '.url')
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
@@ -49,8 +52,10 @@ runs:
       if: steps.check-pr.outputs.exists == 'false'
       run: |
         # Create the pull request
+        # Remove leading and trailing spaces
+        branch_name=$(echo "${{ inputs.branch_name }}" | xargs)
         PR_OUTPUT=$(gh pr create \
           --title "${{ inputs.pr_title }}" \
           --body "${{ inputs.pr_body }}" \
           --base "${{ inputs.base_branch }}" \
-          --head "${{ inputs.branch_name }}")
+          --head "${branch_name}")
