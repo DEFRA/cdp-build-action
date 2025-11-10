@@ -1,0 +1,34 @@
+name: 'Use Branch'
+description: 'Optionally use a branch and create it if it does not exist.'
+inputs:
+  branch_name:
+    description: 'Name of the branch to use. Creates the branch if it does not exist.'
+    required: false
+outputs:
+  branch_name:
+    description: 'The name of the branch that was committed to.'
+    value: ${{ steps.commit.outputs.branch_name }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Use branch
+      id: branch
+      shell: bash
+      run: |
+        # Determine the target branch
+        if [[ -n "${{ inputs.branch_name }}" ]]; then
+          TARGET_BRANCH="${{ inputs.branch_name }}"
+          # Check if branch exists remotely using gh cli
+          if ! gh api repos/$GITHUB_REPOSITORY/branches/$TARGET_BRANCH --silent 2>/dev/null; then
+            echo "Branch '$TARGET_BRANCH' does not exist remotely. Creating it."
+            git switch -c "$TARGET_BRANCH"
+          else
+            echo "Branch '$TARGET_BRANCH' exists. Switching to it."
+            git fetch
+            git switch "$TARGET_BRANCH"
+            git pull origin "$TARGET_BRANCH"
+          fi
+        else
+          TARGET_BRANCH="$GITHUB_REF"
+        fi
+        echo "branch_name=$TARGET_BRANCH" >> $GITHUB_OUTPUT
