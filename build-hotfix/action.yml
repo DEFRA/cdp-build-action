@@ -17,6 +17,23 @@ inputs:
   secret-manager-docker-credentials:
     description: Secret for Github Actions to run Terraform
     default: cdp/platform/gh_actions
+  publish-sbom:
+    description: Enables SBOM publishing
+    required: false
+    default: false
+  sbom-bucket:
+    description: 'Name of the SBOM bucket'
+    required: true
+    default: cdp-management-sbom
+  dev-stage:
+    description: 'Name of the development/build stage in dockerfile to extract the SBOM from'
+    required: false
+    default: dev
+  publish-dev-sbom:
+    description: 'Enabled or disables publishing the dev stage of the SBOM'
+    required: false
+    default: false
+
 
 runs:
   using: "composite"
@@ -88,6 +105,44 @@ runs:
           defra.cdp.run_mode=service
           defra.cdp.hotfix=${{ steps.version.outputs.new_tag }}
           git.hash=${{ github.sha }}
+
+    - name: Build Dev Layer
+      uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        target: development
+        tags: |
+          defradigital/${{ inputs.image-name }}-dev:latest
+
+    - name: Build SBOMs
+      if: inputs.publish-sbom == true
+      uses: anchore/sbom-action@v0
+      with:
+        image: defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
+        format: cyclonedx-json
+        upload-artifact: true
+        output-file: ./sbom.json
+
+    - name: Publish SBOMs
+      if: inputs.publish-sbom == true
+      run:
+         aws s3 cp ./sbom.json "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/sbom.json"
+
+    - name: Build Dev SBOMs
+      if: inputs.publish-sbom == true && inputs.publish-dev-sbom
+      uses: anchore/sbom-action@v0
+      with:
+        image: defradigital/${{ inputs.image-name }}-{{ inputs.dev-stage }}:latest
+        format: cyclonedx-json
+        upload-artifact: true
+        output-file: ./sbom.dev.json
+
+    - name: Publish Dev SBOMs
+      if: inputs.publish-sbom == true && inputs.publish-dev-sbom
+      run:
+         aws s3 cp ./sbom.dev.json "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/sbom.dev.json"
 
     - name: commit-version
       if: inputs.push
