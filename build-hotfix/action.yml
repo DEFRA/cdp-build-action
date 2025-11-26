@@ -28,7 +28,7 @@ inputs:
   dev-stage:
     description: 'Name of the development/build stage in dockerfile to extract the SBOM from'
     required: false
-    default: dev
+    default: development
   publish-dev-sbom:
     description: 'Enabled or disables publishing the dev stage of the SBOM'
     required: false
