@@ -127,7 +127,7 @@ runs:
     - name: Publish SBOMs
       shell: bash
       run:
-         aws s3 cp ./sbom.json "s3://${{ inputs.sbom-bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/sbom.json"
+         aws s3 cp ./sbom.json "s3://${{ inputs.sbom-bucket }}/${{ inputs.image-name }}/${{ steps.version.outputs.new_tag || inputs.version }}/sbom.json"
 
     - name: Build Dev SBOMs
       uses: anchore/sbom-action@v0
@@ -140,7 +140,7 @@ runs:
     - name: Publish Dev SBOMs
       shell: bash
       run:
-         aws s3 cp ./sbom.dev.json "s3://${{ inputs.sbom-bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/sbom.dev.json"
+         aws s3 cp ./sbom.dev.json "s3://${{ inputs.sbom-bucket }}/${{ inputs.image-name }}/${{ steps.version.outputs.new_tag || inputs.version }}/sbom.dev.json"
 
     - name: commit-version
       if: inputs.push
