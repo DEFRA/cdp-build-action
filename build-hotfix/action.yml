@@ -127,6 +127,7 @@ runs:
 
     - name: Publish SBOMs
       if: inputs.publish-sbom == true
+      shell: bash
       run:
          aws s3 cp ./sbom.json "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/sbom.json"
 
@@ -141,6 +142,7 @@ runs:
 
     - name: Publish Dev SBOMs
       if: inputs.publish-sbom == true && inputs.publish-dev-sbom
+      shell: bash
       run:
          aws s3 cp ./sbom.dev.json "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/sbom.dev.json"
 
