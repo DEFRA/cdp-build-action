@@ -117,7 +117,6 @@ runs:
           defradigital/${{ inputs.image-name }}-dev:latest
 
     - name: Build SBOMs
-      if: inputs.publish-sbom == true
       uses: anchore/sbom-action@v0
       with:
         image: defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
@@ -126,13 +125,11 @@ runs:
         output-file: ./sbom.json
 
     - name: Publish SBOMs
-      if: inputs.publish-sbom == true
       shell: bash
       run:
          aws s3 cp ./sbom.json "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/sbom.json"
 
     - name: Build Dev SBOMs
-      if: inputs.publish-sbom == true && inputs.publish-dev-sbom
       uses: anchore/sbom-action@v0
       with:
         image: defradigital/${{ inputs.image-name }}-{{ inputs.dev-stage }}:latest
@@ -141,7 +138,6 @@ runs:
         output-file: ./sbom.dev.json
 
     - name: Publish Dev SBOMs
-      if: inputs.publish-sbom == true && inputs.publish-dev-sbom
       shell: bash
       run:
          aws s3 cp ./sbom.dev.json "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/sbom.dev.json"
