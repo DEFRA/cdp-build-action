@@ -1,0 +1,65 @@
+name: 'CDP Build Action (Dockerhub)'
+
+description: 'builds and publishes docker image to just DockerHub'
+
+inputs:
+  version:
+    description: 'version or tag to set'
+    required: true
+    default: ''
+  image-name:
+    description: 'image of image to push (defaults to repo name)'
+    required: false
+    default: ${{ github.event.repository.name }}
+  push:
+    description: 'push docker image after building'
+    required: false
+    default: true
+  secret-manager-docker-credentials:
+    description: Secret for Github Actions to run Terraform
+    default: cdp/platform/gh_actions
+  dockerfile:
+    description: 'overrides the dockerfile'
+    default: ./Dockerfile
+  context:
+    description: 'overrides the docker context'
+    default: .
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: ${{ env.AWS_REGION }}
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-${{ inputs.image-name }}-build-role
+
+    - run: aws sts get-caller-identity
+      shell: bash
+
+    # Get Docker secrets from Secrets Manager
+    - name: Get Github Actions secrets from Secrets Manager
+      uses: aws-actions/aws-secretsmanager-get-secrets@v2
+      with:
+        secret-ids: |
+          ,${{ inputs.secret-manager-docker-credentials }}
+        parse-json-secrets: true
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ env.DOCKER_USERNAME}}
+        password: ${{ env.DOCKER_TOKEN }}
+
+    - name: Docker Build
+      uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+      with:
+        context: ${{ inputs.context }}
+        no-cache: true
+        file: ${{ inputs.dockerfile }}
+        push: ${{ inputs.push }}
+        tags: |
+          defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
+          defradigital/${{ inputs.image-name }}:latest
+
