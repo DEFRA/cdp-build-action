@@ -132,7 +132,7 @@ runs:
     - name: Build Dev SBOMs
       uses: anchore/sbom-action@v0
       with:
-        image: defradigital/${{ inputs.image-name }}-${{ inputs.dev-stage }}:latest
+        image: defradigital/${{ inputs.image-name }}-dev:latest
         format: cyclonedx-json
         upload-artifact: true
         output-file: ./sbom.dev.json
