@@ -55,10 +55,12 @@ runs:
       shell: bash
 
     # Get Docker secrets from Secrets Manager
+    # NOTE: the `,` in the secret-id param is intentional and not a typo
     - name: Get Github Actions secrets from Secrets Manager
       uses: aws-actions/aws-secretsmanager-get-secrets@v2
       with:
-        secret-ids: ,${{ inputs.secret-manager-docker-credentials }}
+        secret-ids: |
+          ,${{ inputs.secret-manager-docker-credentials }}
         parse-json-secrets: true
 
     - name: Login to Docker Hub
