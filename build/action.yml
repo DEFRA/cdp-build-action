@@ -21,10 +21,6 @@ inputs:
   secret-manager-docker-credentials:
     description: Secret for Github Actions to run Terraform
     default: cdp/platform/gh_actions
-  publish-sbom:
-    description: Enables SBOM publishing
-    required: false
-    default: false
   sbom-bucket:
     description: 'Name of the SBOM bucket'
     required: true
@@ -32,7 +28,11 @@ inputs:
   dev-stage:
     description: 'Name of the development/build stage in dockerfile to extract the SBOM from'
     required: false
-    default: dev
+    default: development
+  publish-sbom:
+    description: 'Enables SBOM publishing'
+    required: false
+    default: false
   publish-dev-sbom:
     description: 'Enabled or disables publishing the dev stage of the SBOM'
     required: false
@@ -55,8 +55,7 @@ runs:
     - name: Get Github Actions secrets from Secrets Manager
       uses: aws-actions/aws-secretsmanager-get-secrets@v2
       with:
-        secret-ids: |
-          ,${{ inputs.secret-manager-docker-credentials }}
+        secret-ids: ${{ inputs.secret-manager-docker-credentials }}
         parse-json-secrets: true
 
     - name: Login to Docker Hub
@@ -86,7 +85,8 @@ runs:
         context: .
         no-cache: false
         file: ./Dockerfile
-        push: ${{ inputs.push }}
+        push: ${{ inputs.push == 'true' }}
+        load: true
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:latest
@@ -100,18 +100,8 @@ runs:
           defra.cdp.run_mode=service
           git.hash=${{ github.sha }}
 
-    - name: Build Dev Layer
-      uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
-      with:
-        context: .
-        file: ./Dockerfile
-        push: false
-        target: development
-        tags: |
-          defradigital/${{ inputs.image-name }}-dev:latest
-
     - name: Build SBOMs
-      if: inputs.publish-sbom == true
+      if: ${{ inputs.publish-sbom == 'true' }}
       uses: anchore/sbom-action@v0
       with:
         image: defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
@@ -120,28 +110,40 @@ runs:
         output-file: ./sbom.json
 
     - name: Publish SBOMs
-      if: inputs.publish-sbom == true
+      if: ${{ inputs.publish-sbom == 'true' }}
       shell: bash
       run:
-         aws s3 cp ./sbom.json "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/sbom.json"
+         aws s3 cp ./sbom.json "s3://${{ inputs.sbom-bucket }}/${{ inputs.image-name }}/${{ steps.version.outputs.new_tag || inputs.version }}/sbom.json"
+
+    - name: Build Dev Layer
+      if: ${{ inputs.publish-dev-sbom == 'true' }}
+      uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        load: true
+        target: ${{ inputs.dev-stage }}
+        tags: |
+          devstage:latest
 
     - name: Build Dev SBOMs
-      if: inputs.publish-sbom == true && inputs.publish-dev-sbom
+      if: ${{ inputs.publish-dev-sbom == 'true' }}
       uses: anchore/sbom-action@v0
       with:
-        image: defradigital/${{ inputs.image-name }}-{{ inputs.dev-stage }}:latest
+        image: devstage:latest
         format: cyclonedx-json
         upload-artifact: true
         output-file: ./sbom.dev.json
 
     - name: Publish Dev SBOMs
-      if: inputs.publish-sbom == true && inputs.publish-dev-sbom
+      if: ${{ inputs.publish-dev-sbom == 'true' }}
       shell: bash
       run:
          aws s3 cp ./sbom.dev.json "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/sbom.dev.json"
 
     - name: commit-version
-      if: inputs.version == '' && inputs.push
+      if: ${{ inputs.version == '' && inputs.push == 'true' }}
       uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}

@@ -14,13 +14,10 @@ inputs:
   github-token:
     description: Github Token, required for autoversioning
     required: false
+    default: ${{ github.token }}
   secret-manager-docker-credentials:
     description: Secret for Github Actions to run Terraform
     default: cdp/platform/gh_actions
-  publish-sbom:
-    description: Enables SBOM publishing
-    required: false
-    default: false
   sbom-bucket:
     description: 'Name of the SBOM bucket'
     required: true
@@ -29,6 +26,10 @@ inputs:
     description: 'Name of the development/build stage in dockerfile to extract the SBOM from'
     required: false
     default: development
+  publish-sbom:
+    description: 'Enables SBOM publishing'
+    required: false
+    default: false
   publish-dev-sbom:
     description: 'Enabled or disables publishing the dev stage of the SBOM'
     required: false
@@ -39,7 +40,7 @@ runs:
   using: "composite"
   steps:
     - name: Cannot run on main
-      if: github.ref == 'refs/heads/main'
+      if: ${{ github.ref == 'refs/heads/main' }}
       shell: bash
       run: |
         echo "You cannot do hotfixes from the main branch!"
@@ -57,8 +58,7 @@ runs:
     - name: Get Github Actions secrets from Secrets Manager
       uses: aws-actions/aws-secretsmanager-get-secrets@v2
       with:
-        secret-ids: |
-          ,${{ inputs.secret-manager-docker-credentials }}
+        secret-ids: ${{ inputs.secret-manager-docker-credentials }}
         parse-json-secrets: true
 
     - name: Login to Docker Hub
@@ -94,6 +94,7 @@ runs:
         no-cache: true
         file: ./Dockerfile
         push: ${{ inputs.push }}
+        load: true
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag }}
           defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag }}
@@ -106,17 +107,8 @@ runs:
           defra.cdp.hotfix=${{ steps.version.outputs.new_tag }}
           git.hash=${{ github.sha }}
 
-    - name: Build Dev Layer
-      uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
-      with:
-        context: .
-        file: ./Dockerfile
-        push: false
-        target: development
-        tags: |
-          defradigital/${{ inputs.image-name }}-dev:latest
-
     - name: Build SBOMs
+      if: ${{ inputs.publish-sbom == 'true' }}
       uses: anchore/sbom-action@v0
       with:
         image: defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
@@ -125,25 +117,40 @@ runs:
         output-file: ./sbom.json
 
     - name: Publish SBOMs
+      if: ${{ inputs.publish-sbom == 'true' }}
       shell: bash
       run:
          aws s3 cp ./sbom.json "s3://${{ inputs.sbom-bucket }}/${{ inputs.image-name }}/${{ steps.version.outputs.new_tag || inputs.version }}/sbom.json"
 
+    - name: Build Dev Layer
+      if: ${{ inputs.publish-dev-sbom == 'true' }}
+      uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        load: true
+        target: ${{ inputs.dev-stage  }}
+        tags: |
+          devstage:latest
+
     - name: Build Dev SBOMs
+      if: ${{ inputs.publish-dev-sbom == 'true' }}
       uses: anchore/sbom-action@v0
       with:
-        image: defradigital/${{ inputs.image-name }}-dev:latest
+        image: devstage:latest
         format: cyclonedx-json
         upload-artifact: true
         output-file: ./sbom.dev.json
 
     - name: Publish Dev SBOMs
+      if: ${{ inputs.publish-dev-sbom == 'true' }}
       shell: bash
       run:
          aws s3 cp ./sbom.dev.json "s3://${{ inputs.sbom-bucket }}/${{ inputs.image-name }}/${{ steps.version.outputs.new_tag || inputs.version }}/sbom.dev.json"
 
     - name: commit-version
-      if: inputs.push
+      if: ${{ inputs.push == 'true' }}
       uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
