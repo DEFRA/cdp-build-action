@@ -96,7 +96,6 @@ runs:
         no-cache: true
         file: ./Dockerfile
         push: ${{ inputs.push }}
-        load: true
         sbom: true
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag }}
