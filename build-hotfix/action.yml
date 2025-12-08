@@ -90,13 +90,14 @@ runs:
         TAG_CONTEXT: branch
 
     - name: Docker Build
-      uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+      uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
       with:
         context: .
         no-cache: true
         file: ./Dockerfile
         push: ${{ inputs.push }}
         load: true
+        sbom: true
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag }}
           defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag }}
