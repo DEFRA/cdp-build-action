@@ -1,22 +1,21 @@
 name: 'CDP Build Action (Dockerhub)'
 
-description: 'builds and publishes docker image to just DockerHub'
+description: 'Builds and publishes docker image to just DockerHub'
 
 inputs:
   version:
     description: 'version or tag to set'
     required: true
-    default: ''
+    default: 'latest'
   image-name:
-    description: 'image of image to push (defaults to repo name)'
-    required: false
-    default: ${{ github.event.repository.name }}
+    description: 'image of image to push'
+    required: true
   push:
     description: 'push docker image after building'
     required: false
     default: true
   secret-manager-docker-credentials:
-    description: Secret for Github Actions to run Terraform
+    description: 'Secret for Github Actions to run Terraform'
     default: cdp/platform/gh_actions
   dockerfile:
     description: 'overrides the dockerfile'
@@ -60,6 +59,10 @@ runs:
         file: ${{ inputs.dockerfile }}
         push: ${{ inputs.push }}
         tags: |
-          defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
-          defradigital/${{ inputs.image-name }}:latest
+          defradigital/${{ inputs.image-name }}:${{ inputs.version }}
+        labels: |
+          defra.cdp.git.repo.name=${{ github.repository }}
+          defra.cdp.service.name=${{ inputs.image-name }}
+          defra.cdp.build.run_id=${{ github.run_id }}
+          git.hash=${{ github.sha }}
 
