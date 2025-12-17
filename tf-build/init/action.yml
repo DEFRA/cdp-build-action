@@ -6,10 +6,38 @@ inputs:
     description: 'A root directory with Terraform files'
     required: false
     default: '.'
+  persist_modules:
+    description: 'If selected, only init modules and persist them for reuse later (defaults to false)'
+    required: false
+    default: 'false'
+  use_persisted_modules:
+    description: 'If selected, use persisted .terraform directory (defaults to false)'
+    required: false
+    default: 'false'
+  upgrade:
+    description: 'Whether to download the latest module changes (defaults to true)'
+    required: false
+    default: 'true'
 
 runs:
   using: "composite"
   steps:
+    - name: Set whether to configure terraform backend
+      shell: bash
+      run: |
+        if [ "${{ inputs.persist_modules }}" = "true" ]; then
+          echo "BACKEND=false" >> "$GITHUB_ENV"
+        else
+          echo "BACKEND=true" >> "$GITHUB_ENV"
+        fi
+
+    - name: Restore terraform cached modules
+      if: inputs.use_persisted_modules == 'true'
+      uses: actions/download-artifact@v7
+      with:
+        name: terraform-dir
+        path: .terraform
+
     # Install Terraform CLI pinned version
     - name: Terraform - setup
       uses: hashicorp/setup-terraform@v3
@@ -20,9 +48,18 @@ runs:
     - name: Terraform Init
       id: init
       run: |
-        cd ${{ inputs.tf_path }}
-        terraform init -backend-config environments/${{ env.ENVIRONMENT }}/backend.conf -reconfigure --upgrade
+        terraform init -backend=${{ env.BACKEND }} -backend-config environments/${{ env.ENVIRONMENT }}/backend.conf -reconfigure --upgrade=${{ inputs.upgrade }}
       shell: bash
+
+    - name: Persist terraform modules
+      if: inputs.persist_modules == 'true' && steps.init.outcome == 'success'
+      id: persists-terraform
+      uses: actions/upload-artifact@v6
+      with:
+        name: terraform-dir
+        path: .terraform
+        if-no-files-found: error
+        include-hidden-files: true
 
     - name: Post init
       if: always() && github.ref != 'refs/heads/main' && steps.init.outcome == 'success' || steps.init.outcome == 'failure'
