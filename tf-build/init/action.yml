@@ -10,6 +10,10 @@ inputs:
     description: 'If selected, only init modules and persist them for reuse later (defaults to false)'
     required: false
     default: 'false'
+  use_persisted_modules:
+    description: 'If selected, use persisted .terraform directory (defaults to false)'
+    required: false
+    default: 'false'
   upgrade:
     description: 'Whether to download the latest module changes (defaults to true)'
     required: false
@@ -26,6 +30,13 @@ runs:
         else
           echo "BACKEND=true" >> "$GITHUB_ENV"
         fi
+
+    - name: Restore terraform cached modules
+      if: inputs.use_persisted_modules == 'true'
+      uses: actions/download-artifact@v7
+      with:
+        name: terraform-dir
+        path: .terraform
 
     # Install Terraform CLI pinned version
     - name: Terraform - setup
