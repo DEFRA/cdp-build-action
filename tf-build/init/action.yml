@@ -38,6 +38,11 @@ runs:
         name: terraform-dir
         path: .terraform
 
+    - name: Set .terraform permissions
+      if: inputs.use_persisted_modules == 'true'
+      run: chmod -R 755 .terraform
+      shell: bash
+
     # Install Terraform CLI pinned version
     - name: Terraform - setup
       uses: hashicorp/setup-terraform@v3
