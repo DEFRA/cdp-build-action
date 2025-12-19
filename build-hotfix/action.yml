@@ -11,6 +11,10 @@ inputs:
     description: 'push docker image after building'
     required: false
     default: true
+  push-build-stages:
+    description: 'push stages in multistage build'
+    required: false
+    default: false
   github-token:
     description: Github Token, required for autoversioning
     required: false
@@ -98,3 +102,41 @@ runs:
         DEFAULT_BUMP: patch
         TAG_CONTEXT: branch
 
+    - name: Build and push Docker build stages
+      if: ${{ inputs.push-build-stages == 'true' }}
+      shell: bash
+      env:
+        AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+        AWS_REGION: ${{ env.AWS_REGION }}
+        IMAGE_NAME: ${{ inputs.image-name }}
+        VERSION: ${{ steps.version.outputs.new_tag || inputs.version }}
+        RUN_ID: ${{ github.run_id }}
+        GITHUB_HASH: ${{ github.sha }}
+      run: |
+        STAGES=()
+        while read -r line; do
+          for word in $line; do
+            [[ $word == --from=* ]] && STAGES+=("${word#--from=}")
+          done
+        done < Dockerfile
+
+        STAGES=($(printf "%s\n" "${STAGES[@]}" | sort -u))
+        
+        if [ ${#STAGES[@]} -eq 0 ]; then
+          echo "No build stages found"
+          exit 0
+        fi
+        
+        for stage in "${STAGES[@]}"; do
+          echo "Building stage: $stage"
+        
+          docker buildx build \
+            --file Dockerfile \
+            --target "$stage" \
+            --push \
+            --no-cache \
+            --tag "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_NAME}:build-stage-${VERSION}-${stage}" \
+            --label "defra.cdp.build.run_id=${RUN_ID}" \
+            --label "git.hash=${GITHUB_HASH}" \
+            . || echo "Stage '$stage' failed, continuing..."
+        done
