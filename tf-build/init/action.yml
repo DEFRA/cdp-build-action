@@ -33,7 +33,7 @@ runs:
 
     - name: Restore terraform cached modules
       if: inputs.use_persisted_modules == 'true'
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v6
       with:
         name: terraform-dir
         path: .terraform
