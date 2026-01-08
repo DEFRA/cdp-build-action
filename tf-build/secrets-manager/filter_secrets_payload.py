@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 """
-Filter MongoDB IAM Users Payload for lambda function
+Filter Secrets Manager Payload for GitHub Actions
 
 Usage (in GitHub Actions workflow):
-    python filter_mongo_payload.py <environment>
+    python filter_secrets_payload.py <environment>
 
 Environment variable required:
     GITHUB_WORKSPACE - GitHub Actions workspace directory
@@ -14,9 +15,9 @@ import sys
 from pathlib import Path
 
 
-def filter_mongo_services(environment, workspace_dir):
+def filter_secrets_services(environment, workspace_dir):
     """
-    Filter tenant services to include only protected zone services with MongoDB enabled.
+    Filter tenant services to include only the zone field.
 
     Args:
         environment: The environment name (e.g., 'dev', 'test', 'prod')
@@ -27,7 +28,7 @@ def filter_mongo_services(environment, workspace_dir):
     """
     workspace = Path(workspace_dir)
     tenants_dir = workspace / "environments" / environment / "tenants"
-    output_file = workspace / "environments" / environment / "filtered_mongo_payload.json"
+    output_file = workspace / "environments" / environment / "filtered_secrets_payload.json"
 
     if not tenants_dir.exists():
         print(f"Error: Tenants directory not found: {tenants_dir}")
@@ -43,7 +44,7 @@ def filter_mongo_services(environment, workspace_dir):
     print(f"Found {len(tenant_files)} tenant files in {environment} environment")
 
     # Get filtered services
-    filtered_services = {}
+    filtered_services = []
     total_services = 0
     filtered_count = 0
 
@@ -55,16 +56,15 @@ def filter_mongo_services(environment, workspace_dir):
             service_name = tenant_file.stem
             total_services += 1
 
-            # Filter: only protected zone and mongo enabled
+            # Extract zone field
             zone = service_config.get("zone")
-            mongo = service_config.get("mongo", False)
 
-            if zone == "protected" and mongo is True:
-                # Extract required fields
-                filtered_services[service_name] = {
-                    "zone": zone,
-                    "mongo": mongo
-                }
+            if zone:
+                filtered_services.append({
+                    service_name: {
+                        "zone": zone
+                    }
+                })
                 filtered_count += 1
 
         except json.JSONDecodeError as e:
@@ -76,19 +76,19 @@ def filter_mongo_services(environment, workspace_dir):
 
     # GUARDRAIL 1: Ensure we have at least some services
     if filtered_count == 0:
-        print(f"ERROR: No services with zone=protected AND mongo=true found!")
+        print(f"ERROR: No services with 'zone' field found!")
         print(f"Total services processed: {total_services}")
         print(f"This would result in an empty payload - ABORTING")
         sys.exit(1)
 
     # GUARDRAIL 2: Exit if suspiciously low count
     if filtered_count < 50:
-        print(f"WARNING: Only {filtered_count} services with zone=protected AND mongo=true")
-        print(f"Expected more MongoDB services - please verify this is correct")
-        sys.exit(1)
+        print(f"WARNING: Only {filtered_count} services with 'zone' field")
+        print(f"Expected most/all services to have zone - please verify this is correct")
+        sys.exit(1) 
 
-    # Create output in the format expected by Lambda: [{ service1: {...}, service2: {...} }]
-    output_payload = [filtered_services]
+    # output payload
+    output_payload = filtered_services
 
     # GUARDRAIL 3: Validate JSON structure
     try:
@@ -110,7 +110,7 @@ def filter_mongo_services(environment, workspace_dir):
         print(f"Approaching SNS limit of 256KB!")
 
     print(f"Total services: {total_services}")
-    print(f"Filtered services (protected + mongo): {filtered_count}")
+    print(f"Filtered services (with zone): {filtered_count}")
     print(f"Output file: {output_file}")
     print(f"Output size: {output_size / 1024:.1f} KB")
 
@@ -120,7 +120,7 @@ def filter_mongo_services(environment, workspace_dir):
 def main():
     """Main entry point for GitHub Actions."""
     if len(sys.argv) != 2:
-        print("Usage: python filter_mongo_payload.py <environment>")
+        print("Usage: python filter_secrets_payload.py <environment>")
         sys.exit(1)
 
     environment = sys.argv[1]
@@ -131,12 +131,12 @@ def main():
         print("Error: GITHUB_WORKSPACE environment variable not set")
         sys.exit(1)
 
-    print(f"Filtering MongoDB services for env: {environment}")
+    print(f"Filtering Secrets Manager services for environment: {environment}")
 
-    output_file = filter_mongo_services(environment, workspace_dir)
+    output_file = filter_secrets_services(environment, workspace_dir)
 
     # Output file path
-    print(f"Filtered payload: {output_file}")
+    print(f"Filtered payload ready: {output_file}")
 
 
 if __name__ == "__main__":
