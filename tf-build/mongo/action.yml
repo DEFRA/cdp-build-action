@@ -8,29 +8,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Construct merged_tenant_services.json from multiple files
+    - name: Construct filtered_mongo_payload.json from multiple files
       shell: bash
       run: |
-        echo "Construct merged_tenant_services.json from multiple files"
-        merged_file=environments/${{ env.ENVIRONMENT }}/merged_tenant_services.json
-        echo "[{" > $merged_file
+        echo "Filtering MongoDB services for environment: ${{ env.ENVIRONMENT }}"
+        python ${{ github.action_path }}/filter_mongo_payload.py ${{ env.ENVIRONMENT }}
 
-        first=true
-        for file in environments/${{ env.ENVIRONMENT }}/tenants/*.json; do
-          if [ "$first" = true ]; then
-            first=false
-          else
-            echo "," >> $merged_file
-          fi
-          service_name=$(basename "$file" .json)
-          echo "\"$service_name\": $(cat $file)" >> $merged_file
-        done
-
-        echo "}]" >> $merged_file
-
-    - name: Update Mongodb Users
+    - name: Update MongoDB Users
       shell: bash
       run: |
-        json_file="environments/${{ env.ENVIRONMENT }}/merged_tenant_services.json"
-        echo "Updating users with ${json_file}"
+        json_file="environments/${{ env.ENVIRONMENT }}/filtered_mongo_payload.json"
+        echo "Publishing filtered MongoDB payload to SNS"
         aws sns publish --topic-arn ${{ inputs.topicArn }} --message file://${json_file}

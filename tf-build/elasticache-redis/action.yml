@@ -11,30 +11,18 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Construct merged_tenant_services.json from multiple files
+    - name: Construct filtered_redis_payload.json from multiple files
       shell: bash
       run: |
-        merged_file=environments/${{ inputs.targetEnv }}/merged_tenant_services.json
-        echo "[" > $merged_file
-
-        first=true
-        for file in environments/${{ inputs.targetEnv }}/tenants/*.json; do
-          if [ "$first" = true ]; then
-            first=false
-          else
-            echo "," >> $merged_file
-          fi
-          service_name=$(basename "$file" .json)
-          echo "{\"$service_name\": $(cat $file)}" >> $merged_file
-        done
-
-        echo "]" >> $merged_file
+        echo "Filtering Redis services for environment: ${{ inputs.targetEnv }}"
+        python ${{ github.action_path }}/filter_redis_payload.py ${{ inputs.targetEnv }}
 
     - name: Manage Redis Users
       shell: bash
       run: |
         message_id=$(uuidgen)
-        json_file="environments/${{ inputs.targetEnv }}/merged_tenant_services.json"
+        json_file="environments/${{ inputs.targetEnv }}/filtered_redis_payload.json"
+        echo "Publishing filtered Redis payload to SNS"
         aws sns publish --topic-arn ${{ inputs.topicArn }}  --message-attributes \
         '{"environment" : { "DataType":"String", "StringValue":"${{ inputs.targetEnv }}"}}' \
         --message file://$json_file \
