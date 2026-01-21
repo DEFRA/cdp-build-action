@@ -1,4 +1,4 @@
-name: "CDP Mongo User Management"
+name: "CDP Mongo User Operations"
 description: "Triggers MongoDB user operations (create/delete/refresh)"
 
 inputs:
