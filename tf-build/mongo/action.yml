@@ -1,9 +1,13 @@
-name: "CDP Mongo User Creation"
-description: "Triggers update of mongo user roles"
+name: "CDP Mongo User Management"
+description: "Triggers MongoDB user operations (create/delete/refresh)"
 
 inputs:
   topicArn:
     description: Which sns topic to send the message to
+    required: true
+  operation:
+    description: 'Operation mode: create, delete, or refresh'
+    required: true
 
 runs:
   using: "composite"
@@ -18,5 +22,8 @@ runs:
       shell: bash
       run: |
         json_file="environments/${{ env.ENVIRONMENT }}/filtered_mongo_payload.json"
-        echo "Publishing filtered MongoDB payload to SNS"
-        aws sns publish --topic-arn ${{ inputs.topicArn }} --message file://${json_file}
+        echo "Publishing filtered MongoDB payload to SNS with operation: ${{ inputs.operation }}"
+        aws sns publish \
+          --topic-arn ${{ inputs.topicArn }} \
+          --message file://${json_file} \
+          --message-attributes '{"operation":{"DataType":"String","StringValue":"${{ inputs.operation }}"}}'
