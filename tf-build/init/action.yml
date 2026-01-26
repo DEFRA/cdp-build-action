@@ -65,6 +65,7 @@ runs:
         path: .terraform
         if-no-files-found: error
         include-hidden-files: true
+        retention-days: 1
 
     - name: Post init
       if: always() && github.ref != 'refs/heads/main' && steps.init.outcome == 'success' || steps.init.outcome == 'failure'
