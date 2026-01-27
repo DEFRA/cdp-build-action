@@ -18,7 +18,10 @@ inputs:
     description: 'Whether to download the latest module changes (defaults to true)'
     required: false
     default: 'true'
-
+outputs:
+  artifact_id:
+    description: 'The Artifact ID'
+    value: ${{ steps.persists-terraform.outputs.artifact-id }}
 runs:
   using: "composite"
   steps:
