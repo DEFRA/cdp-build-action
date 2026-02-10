@@ -7,6 +7,10 @@ inputs:
   branch_name:
     description: 'Name of the branch to commit to. If not provided, uses the current branch. Creates the branch if it does not exist.'
     required: false
+  skip_ci:
+    description: 'Whether to add [skip ci] to end of commit message'
+    required: false
+    default: "true"
 outputs:
   branch_name:
     description: 'The name of the branch that was committed to.'
@@ -27,7 +31,11 @@ runs:
           COMMIT_MESSAGE="${{ inputs.commit_message }}"
         else
           TARGET_BRANCH="$GITHUB_REF"
-          COMMIT_MESSAGE="${{ inputs.commit_message }} [skip ci]"
+          if [[ "${{ inputs.skip_ci }}" == "true" ]]; then
+            COMMIT_MESSAGE="${{ inputs.commit_message }} [skip ci]"
+          else
+            COMMIT_MESSAGE="${{ inputs.commit_message }}"
+          fi
         fi
         
         attempts=0
