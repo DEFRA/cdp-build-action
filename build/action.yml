@@ -73,6 +73,8 @@ runs:
       with:
         context: .
         no-cache: true
+        provenance: false
+        sbom: false
         file: ./Dockerfile
         push: ${{ inputs.push }}
         tags: |
@@ -127,6 +129,8 @@ runs:
             --file Dockerfile \
             --target "$stage" \
             --push \
+            --provenance=false \
+            --sbom=false \
             --no-cache \
             --tag "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_NAME}:build-stage-${VERSION}-${stage}" \
             --label "defra.cdp.build.run_id=${RUN_ID}" \
