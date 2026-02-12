@@ -81,6 +81,8 @@ runs:
         no-cache: true
         file: ./Dockerfile
         push: ${{ inputs.push }}
+        provenance: false
+        sbom: false
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag }}
           defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag }}
@@ -135,6 +137,8 @@ runs:
             --target "$stage" \
             --push \
             --no-cache \
+            --provenance=false \
+            --sbom=false \
             --tag "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_NAME}:build-stage-${VERSION}-${stage}" \
             --label "defra.cdp.build.run_id=${RUN_ID}" \
             --label "git.hash=${GITHUB_HASH}" \
