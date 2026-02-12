@@ -69,6 +69,8 @@ runs:
       with:
         context: .
         no-cache: true
+        provenance: false
+        sbom: false
         file: ./Dockerfile
         push: ${{ inputs.push }}
         tags: |
