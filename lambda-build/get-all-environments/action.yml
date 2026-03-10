@@ -38,7 +38,7 @@ runs:
         import requests
 
         token = os.environ["GH_TOKEN"]
-        url = "https://api.github.com/repos/DEFRA/cdp-platform-config/contents/static/global/config.yml"
+        url = "https://api.github.com/repos/DEFRA/cdp-tf-platform/contents/static/global/config.yml"
 
         headers = {
             "Authorization": f"Bearer {token}",
