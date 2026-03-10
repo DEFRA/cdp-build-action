@@ -53,6 +53,7 @@ runs:
 
         content_b64 = resp.json()["content"]
         text = base64.b64decode(content_b64).decode("utf-8")
+        print(text)
         data = yaml.safe_load(text)
 
         environments = {
@@ -62,6 +63,7 @@ runs:
                 if k != "connectivity"
             ]
         }
+        print(environments)
 
         with open(os.environ["GITHUB_OUTPUT"], "a") as f:
           f.write(f"environments={json.dumps(environments)}\n")
