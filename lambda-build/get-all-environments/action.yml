@@ -52,13 +52,9 @@ runs:
           resp.raise_for_status()
 
         content_b64 = resp.json()["content"]
-
-        # Decode base64 directly
         text = base64.b64decode(content_b64).decode("utf-8")
-
         data = yaml.safe_load(text)
 
-        # Convert to matrix and exclude 'connectivity'
         environments = {
             "include": [
                 {"ENVIRONMENT": k, "AWS_ACCOUNT_ID": v}
@@ -67,5 +63,5 @@ runs:
             ]
         }
 
-        # Output for GitHub Actions
-        print(f"::set-output name=environments::{json.dumps(environments)}")
+        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+          f.write(f"environments={json.dumps(environments)}\n")
