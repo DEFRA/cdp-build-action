@@ -11,6 +11,9 @@ inputs:
     description: AWS Region for the ECR repository, e.g. eu-west-2
     default: eu-west-2
     required: false
+  s3_bucket:
+    description: Name of the S3 bucket to upload the lambda function to
+    required: true
 
 runs:
   using: "composite"
