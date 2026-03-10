@@ -38,7 +38,7 @@ runs:
         import requests
 
         token = os.environ["GH_TOKEN"]
-        url = "https://api.github.com/repos/DEFRA/cdp-platform-config/contents/static/global/config.yaml"
+        url = "https://api.github.com/repos/DEFRA/cdp-platform-config/contents/static/global/config.yml"
 
         headers = {
             "Authorization": f"Bearer {token}",
@@ -46,6 +46,11 @@ runs:
         }
 
         resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+          print("GitHub API returned non-200 status code")
+          print(resp.status_code, resp.text)
+          resp.raise_for_status()
+
         content_b64 = resp.json()["content"]
 
         # Decode base64 directly
