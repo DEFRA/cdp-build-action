@@ -22,7 +22,7 @@ runs:
   steps:
     - name: Generate GitHub App token
       id: app-token
-      uses: ./get-github-token/action.yml
+      uses: DEFRA/cdp-build-action/get-github-token@stable
       with:
         app_id: ${{ inputs.app_id }}
         private_key_id: ${{ inputs.private_key_id }}
