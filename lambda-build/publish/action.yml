@@ -1,0 +1,49 @@
+name: Publish a lambda function to s3
+description: 'Publish the lambda function to s3'
+inputs:
+  function_name:
+    description: The name of the lambda function
+    required: true
+  aws_account_id:
+    description: AWS Account ID for the ECR repository
+    required: true
+  aws_region:
+    description: AWS Region for the ECR repository, e.g. eu-west-2
+    default: eu-west-2
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+
+    # Using IAM role based for OIDC identity provider
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: ${{ inputs.aws_region }}
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/github-lambda-role
+
+    - run: aws sts get-caller-identity
+      shell: bash
+
+    - name: Get lambda artifact
+      id: get_lambda_artifact
+      uses: actions/download-artifact@v5
+      with:
+        name: ${{ inputs.function_name }}.zip
+        path: ./output/
+
+    - name: Get lambda hash file
+      id: get_lambda_hash
+      uses: actions/download-artifact@v5
+      with:
+        name: ${{ inputs.function_name }}.zip.base64sha256
+        path: ./output/
+
+    - name: Push to S3
+      shell: bash
+      run: ${{ github.action_path }}/upload_lambda_to_s3.sh
+      env:
+        FUNCTION_NAME: ${{ inputs.function_name }}
+        S3_BUCKET: ${{ inputs.s3_bucket }}

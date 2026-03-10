@@ -1,0 +1,43 @@
+name: Build a lambda function
+description: 'Build the lambda function'
+inputs:
+  function_name:
+    description: The name of the lambda function
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up python version declared in pyproject.toml
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: "pyproject.toml"
+
+    - name: Install uv with caching
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+
+    - name: Build and package lambda
+      id: build
+      shell: bash
+      run: ${{ github.action_path }}/build_lambda.sh
+      env:
+        FUNCTION_NAME: ${{ inputs.function_name }}
+
+    - name: Store lambda artifact
+      uses: actions/upload-artifact@v4
+      with:
+        if-no-files-found: error
+        name: ${{ input.function_name }}.zip
+        path: ./output/${{ input.function_name }}.zip
+
+    - name: Store lambda hash file
+      uses: actions/upload-artifact@v4
+      with:
+        if-no-files-found: error
+        name: ${{ input.function_name }}.zip.base64sha256
+        path: ./output/${{ input.function_name }}.zip.base64sha256
