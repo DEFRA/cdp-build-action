@@ -1,0 +1,62 @@
+name: "Get environments"
+description: "Return deployment environments and AWS account IDs"
+
+inputs:
+  role_to_assume:
+    description: The IAM role to assume for fetching Secrets
+    required: true
+  app_id:
+    description: GitHub app ID
+    required: true
+  private_key_id:
+    description: Secret for GitHub App
+    required: true
+
+outputs:
+  environments:
+    description: "JSON list of environments for matrix"
+    value: ${{ steps.get-environments.outputs.environments }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate GitHub App token
+      id: app-token
+      uses: ../get-github-token/action.yml
+      with:
+        app_id: ${{ inputs.app_id }}
+        private_key_id: ${{ inputs.private_key_id }}
+        role_to_assume: ${{ inputs.role_to_assume }}
+
+    - name: Install yq
+      shell: bash
+      run: pip install yq
+
+    - name: Fetch environments config
+      shell: bash
+      run: |
+        curl -s \
+          -H "Authorization: Bearer ${{ steps.app-token.outputs.token }}" \
+          -H "Accept: application/vnd.github+json" \
+          https://api.github.com/repos/DEFRA/cdp-platform-config/contents/static/global/config.yaml \
+          | jq -r '.content' | base64 -d > environments.yaml
+
+    - id: get-environments
+      shell: python
+      run: |
+        import json, yaml
+        
+        # Read YAML
+        with open("environments.yaml") as f:
+            data = yaml.safe_load(f)
+        
+        environments = {
+            "include": [
+                {"ENVIRONMENT": k, "AWS_ACCOUNT_ID": v}
+                for k, v in data.get("cdp_environments", {}).items()
+                if k != "connectivity"
+            ]
+        }
+        
+        # Emit as GitHub Actions output
+        print(f"::set-output name=environments::{json.dumps(environments)}")
