@@ -1,0 +1,68 @@
+name: "Get environments"
+description: "Return deployment environments and AWS account IDs"
+
+inputs:
+  role_to_assume:
+    description: The IAM role to assume for fetching Secrets
+    required: true
+  app_id:
+    description: GitHub app ID
+    required: true
+  private_key_id:
+    description: Secret for GitHub App
+    required: true
+
+outputs:
+  environments:
+    description: "JSON list of environments for matrix"
+    value: ${{ steps.get-environments.outputs.environments }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate GitHub App token
+      id: app-token
+      uses: DEFRA/cdp-build-action/get-github-token@stable
+      with:
+        app_id: ${{ inputs.app_id }}
+        private_key_id: ${{ inputs.private_key_id }}
+        role_to_assume: ${{ inputs.role_to_assume }}
+
+    - name: Get environments map
+      id: get-environments
+      shell: python
+      run: |
+        import json
+        import base64
+        import yaml
+        import os
+        import requests
+
+        token = os.environ["GH_TOKEN"]
+        url = "https://api.github.com/repos/DEFRA/cdp-tf-platform/contents/static/global/config.yml"
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json"
+        }
+
+        resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+          print("GitHub API returned non-200 status code")
+          print(resp.status_code, resp.text)
+          resp.raise_for_status()
+
+        content_b64 = resp.json()["content"]
+        text = base64.b64decode(content_b64).decode("utf-8")
+        data = yaml.safe_load(text)
+
+        environments = {
+            "include": [
+                {"ENVIRONMENT": k, "AWS_ACCOUNT_ID": v}
+                for k, v in data.get("cdp_environments", {}).items()
+                if k != "connectivity"
+            ]
+        }
+
+        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+          f.write(f"environments={json.dumps(environments)}\n")

@@ -1,0 +1,48 @@
+name: Publish a lambda function to s3
+description: 'Publish the lambda function to s3'
+inputs:
+  function_name:
+    description: The name of the lambda function
+    required: true
+  s3_bucket:
+    description: Name of the S3 bucket to upload the lambda function to
+    required: true
+  role_to_assume:
+    description: The IAM role to assume for fetching Secrets
+    required: true
+  aws_region:
+    description: AWS Region for the ECR repository, e.g. eu-west-2
+    default: eu-west-2
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: ${{ inputs.aws_region }}
+        role-to-assume: ${{ inputs.role_to_assume }}
+
+    - name: Get lambda artifact
+      id: get_lambda_artifact
+      uses: actions/download-artifact@v5
+      with:
+        name: ${{ inputs.function_name }}.zip
+        path: ./output/
+
+    - name: Get lambda hash file
+      id: get_lambda_hash
+      uses: actions/download-artifact@v5
+      with:
+        name: ${{ inputs.function_name }}.zip.base64sha256
+        path: ./output/
+
+    - name: Push to S3
+      shell: bash
+      run: ${{ github.action_path }}/upload_lambda_to_s3.sh
+      env:
+        FUNCTION_NAME: ${{ inputs.function_name }}
+        S3_BUCKET: ${{ inputs.s3_bucket }}
