@@ -28,7 +28,8 @@ runs:
         private_key_id: ${{ inputs.private_key_id }}
         role_to_assume: ${{ inputs.role_to_assume }}
 
-    - id: get-environments
+    - name: Get environments map
+      id: get-environments
       shell: python
       run: |
         import json

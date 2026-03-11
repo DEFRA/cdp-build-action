@@ -1,8 +1,5 @@
 #!/bin/bash
-
-if [[ -z "${FUNCTION_NAME}" ]]; then
-  export FUNCTION_NAME=$(basename "$PWD")
-fi
+set -euo pipefail
 
 dist_folder="./output"
 python_version=$(uv run python --version | awk '{print $2}')
