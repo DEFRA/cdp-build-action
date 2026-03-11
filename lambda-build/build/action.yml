@@ -34,6 +34,7 @@ runs:
         if-no-files-found: error
         name: ${{ inputs.function_name }}.zip
         path: ./output/${{ inputs.function_name }}.zip
+        retention-days: 1
 
     - name: Store lambda hash file
       uses: actions/upload-artifact@v4
@@ -41,3 +42,4 @@ runs:
         if-no-files-found: error
         name: ${{ inputs.function_name }}.zip.base64sha256
         path: ./output/${{ inputs.function_name }}.zip.base64sha256
+        retention-days: 1
