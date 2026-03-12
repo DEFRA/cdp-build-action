@@ -1,0 +1,27 @@
+name: Unit test a lambda function with tox
+description: 'Unit test the lambda function with tox'
+inputs:
+  python_version:
+    description: The python version to use
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ inputs.python_version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox
+
+    - name: Test with tox
+      shell: bash
+      run: tox
