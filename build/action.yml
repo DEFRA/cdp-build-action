@@ -18,7 +18,7 @@ inputs:
   push-build-stages:
     description: 'push stages in multistage build'
     required: false
-    default: false
+    default: true
   github-token:
     description: Github Token, required for autoversioning
     required: false
