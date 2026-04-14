@@ -48,7 +48,7 @@ runs:
 
     # Install Terraform CLI pinned version
     - name: Terraform - setup
-      uses: hashicorp/setup-terraform@v4.0.0
+      uses: hashicorp/setup-terraform@v4
       with:
         terraform_version: "1.12.2"
 
