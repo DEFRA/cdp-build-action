@@ -62,7 +62,7 @@ runs:
     - name: Persist terraform modules
       if: inputs.persist_modules == 'true' && steps.init.outcome == 'success'
       id: persists-terraform
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7.0.1 # Upgrade version here to update all pipelines using this action
       with:
         name: terraform-dir
         path: .terraform
