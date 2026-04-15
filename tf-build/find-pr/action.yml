@@ -8,7 +8,7 @@ inputs:
     default: 'all'
 
 outputs:
-  pr-number:
+  number:
     description: 'The number of the found pull request'
     value: ${{ steps.findPr.outputs.number }}
 
