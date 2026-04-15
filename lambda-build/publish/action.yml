@@ -28,14 +28,14 @@ runs:
 
     - name: Get lambda artifact
       id: get_lambda_artifact
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v8.0.1
       with:
         name: ${{ inputs.function_name }}.zip
         path: ./output/
 
     - name: Get lambda hash file
       id: get_lambda_hash
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v8.0.1
       with:
         name: ${{ inputs.function_name }}.zip.base64sha256
         path: ./output/
