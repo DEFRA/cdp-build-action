@@ -1,0 +1,22 @@
+name: 'Find Current Pull Request'
+description: 'Locates the current PR and returns its number'
+
+inputs:
+  state:
+    description: 'The state of the PR to look for (e.g., open, closed, all)'
+    required: false
+    default: 'all'
+
+outputs:
+  number:
+    description: 'The number of the found pull request'
+    value: ${{ steps.findPr.outputs.number }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Find PR
+      id: findPr
+      uses: DEFRA/cdp-gh-find-current-pr@v1.3.5 # Managed version
+      with:
+        state: ${{ inputs.state }}

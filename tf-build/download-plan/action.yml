@@ -1,0 +1,31 @@
+name: 'Get Plan Artifact'
+description: 'Downloads a Terraform plan artifact from a PR workflow'
+
+inputs:
+  pr_number:
+    description: 'The PR number to fetch artifacts from'
+    required: true
+  environment:
+    description: 'The environment name (e.g., dev, prod)'
+    required: true
+
+outputs:
+  found_artifact:
+    description: "Returns 'true' if the artifact was successfully downloaded"
+    # Map the internal step output to the action output
+    value: ${{ steps.download.outputs.found_artifact }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download Artifact
+      id: download
+      # The 'if' condition works inside composite actions to skip the step if no PR exists
+      if: ${{ inputs.pr_number != '' }}
+      uses: DEFRA/cdp-action-download-artifact@v20 # change this to the correct version of the action
+      with:
+        workflow: pull-request.yml
+        pr: ${{ inputs.pr_number }}
+        name: ${{ inputs.environment }}.plan.file
+        path: .
+        if_no_artifact_found: ignore
