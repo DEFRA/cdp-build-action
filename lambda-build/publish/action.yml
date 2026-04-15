@@ -28,14 +28,14 @@ runs:
 
     - name: Get lambda artifact
       id: get_lambda_artifact
-      uses: actions/download-artifact@v8.0.1
+      uses: actions/download-artifact@v8.0.1 # Upgrade version here to update all pipelines using this action
       with:
         name: ${{ inputs.function_name }}.zip
         path: ./output/
 
     - name: Get lambda hash file
       id: get_lambda_hash
-      uses: actions/download-artifact@v8.0.1
+      uses: actions/download-artifact@v8.0.1 # Upgrade version here to update all pipelines using this action
       with:
         name: ${{ inputs.function_name }}.zip.base64sha256
         path: ./output/
