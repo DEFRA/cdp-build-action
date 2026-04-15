@@ -9,6 +9,12 @@ inputs:
     description: 'The environment name (e.g., dev, prod)'
     required: true
 
+outputs:
+  found_artifact:
+    description: "Returns 'true' if the artifact was successfully downloaded"
+    # Map the internal step output to the action output
+    value: ${{ steps.download.outputs.found_artifact }}
+
 runs:
   using: "composite"
   steps:
