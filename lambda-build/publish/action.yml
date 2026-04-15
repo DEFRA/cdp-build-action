@@ -28,14 +28,14 @@ runs:
 
     - name: Get lambda artifact
       id: get_lambda_artifact
-      uses: DEFRA/cdp-action-download-artifact@v20
+      uses: actions/download-artifact@v5
       with:
         name: ${{ inputs.function_name }}.zip
         path: ./output/
 
     - name: Get lambda hash file
       id: get_lambda_hash
-      uses: DEFRA/cdp-action-download-artifact@v20
+      uses: actions/download-artifact@v5
       with:
         name: ${{ inputs.function_name }}.zip.base64sha256
         path: ./output/
