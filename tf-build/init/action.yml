@@ -36,7 +36,8 @@ runs:
 
     - name: Restore terraform cached modules
       if: inputs.use_persisted_modules == 'true'
-      uses: actions/download-artifact@v6
+      # uses: actions/download-artifact@v6
+      uses: DEFRA/cdp-action-download-artifact@v20 # change version here to update all pipelines using this action
       with:
         name: terraform-dir
         path: .terraform
