@@ -1,0 +1,32 @@
+name: 'Standardized Checkov Scan'
+description: 'Runs Checkov with centralized versioning and defaults'
+
+inputs:
+  quiet:
+    description: 'Only display failed checks'
+    required: false
+    default: 'true'
+  framework:
+    description: 'The framework to check'
+    required: false
+    default: 'terraform'
+  output_format:
+    description: 'The output format (cli, json, sarif, etc.)'
+    required: false
+    default: 'cli'
+  prisma-api-url:
+    description: 'The Prisma Cloud API URL'
+    required: false
+    default: 'https://api0.prismacloud.io'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Terraform - checkov
+      id: checkov
+      uses: bridgecrewio/checkov-action@v12 # VERSION MANAGED HERE
+      with:
+        quiet: ${{ inputs.quiet }}
+        framework: ${{ inputs.framework }}
+        output_format: ${{ inputs.output_format }}
+        prisma-api-url: ${{ inputs.prisma-api-url }}
