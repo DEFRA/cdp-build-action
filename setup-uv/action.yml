@@ -1,0 +1,15 @@
+name: 'Setup UV Environment'
+description: 'Installs uv, enables caching, and sets up Python'
+inputs:
+  enable-cache:
+    description: 'Whether to enable caching for uv'
+    required: false
+    default: 'true'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v8.1.0
+      with:
+        enable-cache: ${{ inputs.enable-cache }}
