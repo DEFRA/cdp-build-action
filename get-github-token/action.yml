@@ -44,7 +44,7 @@ runs:
     # Github auth using Github App - environment variables are set by previous step action
     - name: Get token
       id: get-token
-      uses: getsentry/action-github-app-token@v3
+      uses: getsentry/action-github-app-token@v4.0.0
       with:
         app_id: ${{ inputs.app_id }}
         private_key: ${{ env.PRIVATE_KEY }}
