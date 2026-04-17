@@ -10,9 +10,6 @@ inputs:
     description: 'Relative path under $GITHUB_WORKSPACE to place the repository'
     required: false
     default: ''
-  ref:
-    description: 'The branch, tag or SHA to checkout'
-    required: false
 
 runs:
   using: "composite"
@@ -22,4 +19,3 @@ runs:
       with:
         fetch-depth: ${{ inputs.fetch-depth }}
         path: ${{ inputs.path }}
-        ref: ${{ inputs.ref }}
