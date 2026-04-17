@@ -13,7 +13,6 @@ inputs:
   ref:
     description: 'The branch, tag or SHA to checkout'
     required: false
-    default: 'main' # Defaulting to main as requested
 
 runs:
   using: "composite"
