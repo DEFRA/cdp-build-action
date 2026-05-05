@@ -1,0 +1,23 @@
+name: workflow-timeout
+ 
+on:
+  workflow_call:
+    inputs:
+      timeout:
+        description: 'Job timeout in minutes - kills job if runner is stuck or unavailable'
+        type: number
+        default: 10
+        required: false
+      runner:
+        description: 'Runner to use - must match your actual workflow runner to protect against stuck/down runners'
+        type: string
+        default: 'ubuntu-latest'
+        required: false
+ 
+jobs:
+  timeout-guard:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout }}
+    steps:
+      - name: Acknowledge timeout
+        run: echo "Timeout set to ${{ inputs.timeout }} minutes on runner ${{ inputs.runner }}"
