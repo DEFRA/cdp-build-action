@@ -1,22 +1,15 @@
 name: Workflows Reaper
+description: "Cancel long running workflows"
 
-on:
-  workflow_call:
-    inputs:
-      timeout_minutes:
-        description: 'Cancel workflows running or queued longer than this many minutes'
-        type: number
-        default: 120
-        required: false
+inputs:
+   timeout_minutes:
+     description: 'Cancel workflows running or queued longer than this many minutes'
+     type: number
+     default: 120
+     required: false
 
-jobs:
-  terminate-stuck-runs:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      actions: write
-      contents: write
-
+runs:
+  using: "composite"
     steps:
       - name: Cancel long-running flows
         env:
