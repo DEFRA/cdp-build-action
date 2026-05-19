@@ -5,6 +5,10 @@ inputs:
     description: 'Whether to enable caching for uv'
     required: false
     default: 'true'
+  working-directory:
+    description: 'The directory to execute all commands in and look for files such as pyproject.toml'
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -13,3 +17,4 @@ runs:
       uses: astral-sh/setup-uv@v8.1.0
       with:
         enable-cache: ${{ inputs.enable-cache }}
+        working-directory: ${{ inputs.working-directory }}
