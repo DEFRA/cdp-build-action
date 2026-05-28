@@ -75,7 +75,6 @@ runs:
         push: ${{ inputs.push }}
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
-          ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:latest
         labels: |
           defra.cdp.git.repo.url=${{ github.server_url }}/${{ github.repository }}
           defra.cdp.git.repo.name=${{ github.repository }}
