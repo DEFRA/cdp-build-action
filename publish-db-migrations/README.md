@@ -35,6 +35,16 @@ jobs:
 
 ```
 
+Tenants may store their migration files in any folder. The `path` value is persisted in the published `migrations.metadata.json` and is automatically used by the CDP deployment pipeline when running `liquibase`. The default path (`./changelog`) is preserved for existing services that do not specify a custom location.
+
+```yaml
+      - name: Publish database migrations (custom path)
+        uses: DEFRA/cdp-build-action/publish-db-migrations@main
+        with:
+          path: ./db/migrations
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
 This action is intended to be run _after_ DEFRA/cdp-build-action/build has finished running.
 This ensures db migrations are versioned using the same version number as the release of the service.
 
