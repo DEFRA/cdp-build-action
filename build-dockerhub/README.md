@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Build and Publish
-        uses: defra/cdp-build-action/build@main
+        uses: defra/cdp-build-action/build-dockerhub@main
         with:
           version: 'latest'
           image-name: 'my-service-stub'
@@ -36,12 +36,11 @@ If any steps are required before building the image, they can be inserted as ste
 
 `version`
 
-If you wish to use your own versioning systems for whatever reason (maybe a custom one that bumps the package.json version etc), you can override the version number via the version input.
+Sets the version of the artifact. (Default 'latest', required)
 
 `image-name`
 
-Overrides the name of the docker image.
-By default it will use the name of the github repository, but in some use cases (repositories being renamed, multi-project repos, etc.) it may be required to override this value.
+Name of the image to publish. Should not be the same as your service name.
 
 `dockerfile`
 
