@@ -18,6 +18,10 @@ inputs:
     description: 'Repository name with owner. For example, actions/checkout'
     required: false
     default: ''
+  token:
+    description: 'Personal access token (PAT) used to fetch the repository'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -29,3 +33,4 @@ runs:
         path: ${{ inputs.path }}
         ref: ${{ inputs.ref }}
         repository: ${{ inputs.repository }}
+        token: ${{ inputs.token }}
