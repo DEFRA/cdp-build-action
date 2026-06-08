@@ -32,5 +32,5 @@ runs:
         fetch-depth: ${{ inputs.fetch-depth }}
         path: ${{ inputs.path }}
         ref: ${{ inputs.ref }}
-        repository: ${{ inputs.repository }}
-        token: ${{ inputs.token }}
+        repository: ${{ inputs.repository || github.repository }}
+        token: ${{ inputs.token || github.token }}
