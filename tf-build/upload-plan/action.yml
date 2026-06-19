@@ -5,6 +5,10 @@ inputs:
   environment:
     description: 'The environment name (e.g., dev, prod)'
     required: true
+  tf_path:
+    description: 'A root directory with Terraform files'
+    required: false
+    default: '.'
 
 runs:
   using: "composite"
@@ -14,5 +18,5 @@ runs:
       uses: actions/upload-artifact@v7.0.1 # Upgrade version here to update all pipelines using this action
       with:
         name: ${{ inputs.environment }}.plan.file
-        path: ${{ inputs.environment }}.plan.file
+        path: ${{ inputs.tf_path }}/${{ inputs.environment }}.plan.file
         retention-days: 1
