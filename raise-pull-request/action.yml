@@ -18,10 +18,10 @@ inputs:
 outputs:
   pr_url:
     description: 'The URL of the created or existing pull request.'
-    value: ${{ steps.raise-pr.outputs.pr_url }}
+    value: ${{ steps.output-pr.outputs.pr_url }}
   pr_number:
     description: 'The number of the created or existing pull request.'
-    value: ${{ steps.raise-pr.outputs.pr_number }}
+    value: ${{ steps.output-pr.outputs.pr_number }}
 runs:
   using: 'composite'
   steps:
@@ -59,3 +59,24 @@ runs:
           --body "${{ inputs.pr_body }}" \
           --base "${{ inputs.base_branch }}" \
           --head "${branch_name}")
+        PR_NUMBER=$(echo "$PR_OUTPUT" | awk -F'/' '{print $NF}')
+        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        echo "pr_url=$PR_OUTPUT" >> $GITHUB_OUTPUT
+
+    - name: Set output values
+      id: output-pr
+      shell: bash
+      run: |
+        PR_URL="${{ steps.raise-pr.outputs.pr_url }}"
+        PR_NUMBER="${{ steps.raise-pr.outputs.pr_number }}"
+
+        if [[ -z "$PR_URL" ]]; then
+          PR_URL="${{ steps.check-pr.outputs.pr_url }}"
+        fi
+
+        if [[ -z "$PR_NUMBER" ]]; then
+          PR_NUMBER="${{ steps.check-pr.outputs.pr_number }}"
+        fi
+
+        echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
