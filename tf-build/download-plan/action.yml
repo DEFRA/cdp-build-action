@@ -8,6 +8,10 @@ inputs:
   environment:
     description: 'The environment name (e.g., dev, prod)'
     required: true
+  workflow_file_name:
+    description: 'The file name of the workflow to fetch artifacts from'
+    required: false
+    default: 'pull-request.yml'
 
 outputs:
   found_artifact:
@@ -24,7 +28,7 @@ runs:
       if: ${{ inputs.pr_number != '' }}
       uses: DEFRA/cdp-action-download-artifact@v20 # change this to the correct version of the action
       with:
-        workflow: pull-request.yml
+        workflow: ${{ inputs.workflow_file_name }}
         pr: ${{ inputs.pr_number }}
         name: ${{ inputs.environment }}.plan.file
         path: .
