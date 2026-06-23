@@ -8,6 +8,10 @@ inputs:
   environment:
     description: 'The environment name (e.g., dev, prod)'
     required: true
+  tf_path:
+    description: 'The path to the Terraform files'
+    required: false
+    default: '.'
   workflow_file_name:
     description: 'The file name of the workflow to fetch artifacts from'
     required: false
@@ -31,5 +35,5 @@ runs:
         workflow: ${{ inputs.workflow_file_name }}
         pr: ${{ inputs.pr_number }}
         name: ${{ inputs.environment }}.plan.file
-        path: .
+        path: ${{ inputs.tf_path }}
         if_no_artifact_found: ignore
