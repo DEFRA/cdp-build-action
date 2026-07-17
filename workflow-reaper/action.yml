@@ -105,19 +105,7 @@ runs:
             }
           }' > sns-message.json
 
-        MESSAGE_ATTRIBUTES=$(cat <<EOF
-        {
-          "environment": {
-            "DataType": "String",
-            "StringValue": "management"
-          }
-        }
-        EOF
-        )
-
         aws sns publish \
           --topic-arn "arn:aws:sns:eu-west-2:094954420758:mono-lambda-local-trigger-topic.fifo" \
           --message file://sns-message.json \
-          --message-attributes "$MESSAGE_ATTRIBUTES" \
-          --message-group-id cdp-mongo-ami-slack \
-          --message-deduplication-id "$TIMESTAMP"
+          --message-group-id cdp-reaper-slack
