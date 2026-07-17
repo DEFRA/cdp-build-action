@@ -10,12 +10,6 @@ inputs:
 
 runs:
   using: 'composite'
-
-  env:
-    ENVIRONMENT: management
-    AWS_ACCOUNT_ID: "094954420758"
-    AWS_REGION: eu-west-2
-
   steps:
     - name: Cancel long-running workflows
       id: reaper
@@ -50,8 +44,8 @@ runs:
       if: steps.reaper.outputs.cancelled_runs == 'true'
       uses: aws-actions/configure-aws-credentials@v6.1.1
       with:
-        aws-region: ${{ env.AWS_REGION }}
-        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions-role
+        aws-region: eu-west-2
+        role-to-assume: arn:aws:iam::094954420758:role/github-actions-role
 
     - name: Send Slack Notification
       if: steps.reaper.outputs.cancelled_runs == 'true'
@@ -122,7 +116,7 @@ runs:
         )
 
         aws sns publish \
-          --topic-arn "arn:aws:sns:${{ env.AWS_REGION }}:${{ env.AWS_ACCOUNT_ID }}:mono-lambda-local-trigger-topic.fifo" \
+          --topic-arn "arn:aws:sns:eu-west-2:094954420758:mono-lambda-local-trigger-topic.fifo" \
           --message file://sns-message.json \
           --message-attributes "$MESSAGE_ATTRIBUTES" \
           --message-group-id cdp-mongo-ami-slack \
