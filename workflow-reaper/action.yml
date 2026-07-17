@@ -10,6 +10,12 @@ inputs:
 
 runs:
   using: 'composite'
+
+  env:
+    ENVIRONMENT: management
+    AWS_ACCOUNT_ID: "094954420758"
+    AWS_REGION: eu-west-2
+
   steps:
     - name: Cancel long-running workflows
       id: reaper
