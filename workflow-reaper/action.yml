@@ -12,10 +12,13 @@ runs:
   using: 'composite'
   steps:
     - name: Cancel long-running workflows
+      id: reaper
       shell: bash
       run: |
           CUTOFF=$(date -u -d "${{ inputs.timeout_minutes || 120 }} minutes ago" +%Y-%m-%dT%H:%M:%SZ)
           echo "Cancelling runs older than: $CUTOFF (${CUTOFF_MINUTES} minutes ago)"
+
+          CANCELLED=false
 
           for STATUS in queued in_progress; do
             echo "Checking $STATUS runs..."
@@ -29,7 +32,80 @@ runs:
             if [ -z "$IDS" ]; then
               echo "No stuck $STATUS runs found"
             else
+              CANCELLED=true
               echo "Cancelling: $IDS"
               echo "$IDS" | xargs -I{} gh run cancel {} --repo "${{ github.repository }}"
             fi
           done
+        
+          echo "cancelled_runs=$CANCELLED" >> "$GITHUB_OUTPUT"
+
+    - name: Configure AWS credentials
+      if: steps.reaper.outputs.cancelled_runs == 'true'
+      uses: aws-actions/configure-aws-credentials@v6.1.1
+      with:
+        aws-region: eu-west-2
+        role-to-assume: arn:aws:iam::094954420758:role/github-actions-role
+
+    - name: Send Slack Notification
+      if: steps.reaper.outputs.cancelled_runs == 'true'
+      shell: bash
+      run: |
+        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+        SLACK_MESSAGE=$(cat <<'EOF'
+        {
+          "channel": "cdp-infra-notifications",
+          "username": "SlackBot",
+          "icon_url": "https://upload.wikimedia.org/wikipedia/commons/6/6a/Reaper.png",
+          "text": "Cancelled GitHub Workflow",
+          "attachments": [
+            {
+              "color": "#47A248",
+              "blocks": [
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow Reaper Bot*"
+                    }
+                  ]
+                },
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "GitHub Workflow Cancelled Notification"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "A long-running workflow was cancelled in ${{ github.repository }} - please investigate and restart if necessary"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+        EOF
+        )
+
+        jq -n \
+          --arg timestamp "$TIMESTAMP" \
+          --argjson slack_message "$SLACK_MESSAGE" \
+          '{
+            event_type: "send_slack_notification",
+            timestamp: $timestamp,
+            payload: {
+              team: "platform",
+              message: $slack_message
+            }
+          }' > sns-message.json
+
+        aws sns publish \
+          --topic-arn "arn:aws:sns:eu-west-2:094954420758:mono-lambda-local-trigger-topic.fifo" \
+          --message file://sns-message.json \
+          --message-group-id cdp-reaper-slack

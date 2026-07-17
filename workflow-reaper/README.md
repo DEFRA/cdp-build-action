@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       actions: write
+      id-token: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
