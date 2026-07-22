@@ -1,0 +1,43 @@
+name: "Auto-Format PR Title"
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'build/**'
+      - 'build-*/**'
+      - 'docker-login/**'
+
+permissions:
+  pull-requests: write
+
+jobs:
+  format-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check and Update PR Title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            let title = pr.title;
+            const branch = pr.head.ref;
+            
+            // Checks if the PR title already starts with a conventional commit pattern
+            const conventionalRegex = /^(feat|fix|chore|docs|style|refactor|perf|test)(\(.+\))?!?: /;
+            
+            if (!conventionalRegex.test(title)) {
+              let prefix = "feat: "; // Fallback prefix if branch name doesn't match
+            
+              if (branch.startsWith("feat/") || branch.includes("-feat-")) prefix = "feat: ";
+              if (branch.startsWith("fix/") || branch.includes("-fix-")) prefix = "fix: ";
+            
+              const newTitle = `${prefix}${title}`;
+            
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                title: newTitle
+              });
+            }
