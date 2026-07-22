@@ -62,9 +62,16 @@ runs:
         fi
         echo "Directory '${{ inputs.path }}' exists and contains at least one file."
 
-        # Check if there eare any changes in this commit
-        if [ ${{ inputs.force }} == "false" ]; then
+        # Check if there are any changes in this commit
+        if [ "${{ inputs.force }}" == "false" ]; then
           echo "Checking for changes in '${{ inputs.path }}'..."
+
+          # Skip if running on a branch and there's nothing new on it
+          if [ "${{ github.event.before }}" == "0000000000000000000000000000000000000000"]; then
+            echo "No changes detected in '${{ inputs.path }}'. Nothing to publish."
+            echo "No new database migrations were published, ${{ inputs.path }} was not updated" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
 
           git fetch --unshallow || true
           git fetch origin "${{ github.event.before }}" "${{ github.sha }}"
@@ -76,7 +83,7 @@ runs:
           else
             echo "Changes detected in '${{ inputs.path }}'. Proceeding with upload."
           fi
-          else
+        else
             echo "Force publish enabled. Skipping change check."
         fi
 
