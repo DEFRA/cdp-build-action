@@ -4,7 +4,14 @@ inputs:
   function_name:
     description: The name of the lambda function
     required: true
-
+  files:
+    required: false
+    description: Space-separated list of files to include
+    default: "handler.py"
+  directories:
+    required: false
+    description: Space-separated list of directories to include
+    default: ""
 runs:
   using: "composite"
 
@@ -27,6 +34,8 @@ runs:
       run: ${{ github.action_path }}/build_lambda.sh
       env:
         FUNCTION_NAME: ${{ inputs.function_name }}
+        FILES: ${{ inputs.files }}
+        DIRECTORIES: ${{ inputs.directories }}
 
     - name: Store lambda artifact
       uses: actions/upload-artifact@v7.0.1 # Upgrade version here to update all pipelines using this action

@@ -18,9 +18,25 @@ uv pip install \
 
 rm requirements.txt
 
-cp config.py ${dist_folder}
-cp handler.py ${dist_folder}
-cp -r modules ${dist_folder}
+# Copy files
+for file in ${FILES}; do
+    if [[ -f "$file" ]]; then
+        cp "$file" "${dist_folder}"
+    else
+        echo "File '$file' not found"
+        exit 1
+    fi
+done
+
+# Copy directories
+for dir in ${DIRECTORIES}; do
+    if [[ -d "$dir" ]]; then
+        cp -R "$dir" "${dist_folder}"
+    else
+        echo "Directory '$dir' not found"
+        exit 1
+    fi
+done
 
 cd ${dist_folder}
 zip -r "${FUNCTION_NAME}.zip" .
