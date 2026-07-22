@@ -136,4 +136,3 @@ runs:
             --label "git.hash=${GITHUB_HASH}" \
             . || echo "Stage '$stage' failed, continuing..."
         done
-
