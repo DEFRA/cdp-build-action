@@ -83,7 +83,7 @@ runs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "A long-running workflow was cancelled in ${{ github.repository }} - please investigate and restart if necessary"
+                    "text": "<!subteam^S06J58QCGKW> A long-running workflow was cancelled in ${{ github.repository }} - please investigate and restart if necessary"
                   }
                 }
               ]
