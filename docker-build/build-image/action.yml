@@ -4,6 +4,10 @@ inputs:
   image_name:
     description: Name for the container image
     required: true
+  path:
+    description: Path to the Dockerfile and supporting files
+    default: .
+    required: false
   tag:
     description: Tag for the container image
     default: latest
@@ -15,5 +19,5 @@ runs:
     - name: Local build
       run: |
         echo "Building container docker image"
-        docker build --no-cache --tag ${{ inputs.image_name }}:${{ inputs.tag }} .
+        docker build --no-cache --tag ${{ inputs.image_name }}:${{ inputs.tag }} ${{ inputs.path }}
       shell: bash
