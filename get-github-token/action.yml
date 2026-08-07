@@ -56,7 +56,7 @@ runs:
         TOKEN: ${{ steps.get-token.outputs.token }}
       run: |
         echo "GH_TOKEN=$TOKEN" >> $GITHUB_ENV
-        
+
     # Set the git user and email if provided
     - name: Set Git Username and Email
       shell: bash
@@ -64,18 +64,22 @@ runs:
         USERNAME: ${{ inputs.username }}
         EMAIL: ${{ inputs.email }}
       run: |
+        GLOBAL_GIT_CONFIG_FILE="${RUNNER_TEMP}/cdp-gitconfig"
+
+        # Use a per-job global config so credentials do not leak between long-lived runners.
+        echo "GIT_CONFIG_GLOBAL=${GLOBAL_GIT_CONFIG_FILE}" >> "$GITHUB_ENV"
+        echo "GIT_TERMINAL_PROMPT=0" >> "$GITHUB_ENV"
+        rm -f "${GLOBAL_GIT_CONFIG_FILE}"
+
         if [ -d ".git" ]; then
-          git config --local --remove-section http."https://github.com/"
+          git config --local --unset-all http.https://github.com/.extraheader || true
         else
-          echo '!! No git repo found! You must run "git config --local --remove-section http."https://github.com/" after you check out in order to push using this token'
+          echo '!! No git repo found! You must run "git config --local --unset-all http.https://github.com/.extraheader || true" after checkout in order to push using this token'
         fi
-        git config --global url."https://x-access-token:${{ steps.get-token.outputs.token }}@github.com".insteadOf "https://github.com"
+        git config --file "${GLOBAL_GIT_CONFIG_FILE}" url."https://x-access-token:${{ steps.get-token.outputs.token }}@github.com".insteadOf "https://github.com"
         if [ -n "$USERNAME" ]; then
           git config --global user.name $USERNAME
         fi
         if [ -n "$EMAIL" ]; then
-          git config --global user.email $USERNAME
+          git config --global user.email $EMAIL
         fi
-
-
-      
