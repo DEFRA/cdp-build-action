@@ -69,6 +69,12 @@ runs:
         # Use a per-job global config so credentials do not leak between long-lived runners.
         echo "GIT_CONFIG_GLOBAL=${GLOBAL_GIT_CONFIG_FILE}" >> "$GITHUB_ENV"
         echo "GIT_TERMINAL_PROMPT=0" >> "$GITHUB_ENV"
+
+        # Apply for this step as well so `git config --global` writes to the
+        # same config file used by later steps.
+        export GIT_CONFIG_GLOBAL="${GLOBAL_GIT_CONFIG_FILE}"
+        export GIT_TERMINAL_PROMPT=0
+
         rm -f "${GLOBAL_GIT_CONFIG_FILE}"
 
         if [ -d ".git" ]; then
@@ -79,8 +85,8 @@ runs:
         git config --file "${GLOBAL_GIT_CONFIG_FILE}" url."https://x-access-token:${{ steps.get-token.outputs.token }}@github.com".insteadOf "https://github.com"
 
         if [ -n "$USERNAME" ]; then
-          git config --global user.name $USERNAME
+          git config --global user.name "$USERNAME"
         fi
         if [ -n "$EMAIL" ]; then
-          git config --global user.email $USERNAME
+          git config --global user.email "$EMAIL"
         fi
