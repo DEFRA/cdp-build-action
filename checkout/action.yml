@@ -34,3 +34,4 @@ runs:
         ref: ${{ inputs.ref }}
         repository: ${{ inputs.repository || github.repository }}
         token: ${{ inputs.token || github.token }}
+        persist-credentials: false
