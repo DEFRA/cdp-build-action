@@ -22,11 +22,24 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v8.1.0
+
     - name: Terraform - checkov
       id: checkov
-      uses: bridgecrewio/checkov-action@v12 # VERSION MANAGED HERE
-      with:
-        quiet: ${{ inputs.quiet }}
-        framework: ${{ inputs.framework }}
-        output_format: ${{ inputs.output_format }}
-        prisma-api-url: ${{ inputs.prisma-api-url }}
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        args=(
+          --directory .
+          --framework "${{ inputs.framework }}"
+          --output "${{ inputs.output_format }}"
+          --prisma-api-url "${{ inputs.prisma-api-url }}"
+        )
+
+        if [[ "${{ inputs.quiet }}" == 'true' ]]; then
+          args+=(--quiet)
+        fi
+
+        uv tool run --from "checkov==3.3.9" checkov "${args[@]}"

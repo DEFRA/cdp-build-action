@@ -1,11 +1,12 @@
 # Centralized Checkov Scan Action
 
-This composite action provides a standardized wrapper for the [Bridgecrew Checkov Action](https://github.com/bridgecrewio/checkov-action). It centralizes the versioning and default configuration for Infrastructure as Code (IaC) security scanning across all workflows in this repository.
+This composite action provides a standardized wrapper for a pinned [Checkov](https://www.checkov.io/) CLI invocation. It centralizes the versioning and default configuration for Infrastructure as Code (IaC) security scanning across all workflows in this repository.
 
 ## Why Use This Action?
 
-* **Single Source of Truth:** Manage the Checkov version (`v12`) in one file rather than updating dozens of workflow files.
+* **Single Source of Truth:** Manage the Checkov version (`3.3.9`) in one file rather than updating dozens of workflow files.
 * **Consistent Policy:** Ensures that the Prisma API URL, output formats, and framework settings are identical across the organization.
+* **Runner Compatibility:** Avoids the Docker-action path and problem matcher issues seen on persistent self-hosted runners.
 * **Clean Workflows:** Reduces boilerplate code in your main CI/CD pipeline files.
 
 ## Inputs
