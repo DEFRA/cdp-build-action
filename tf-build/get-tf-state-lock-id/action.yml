@@ -20,12 +20,13 @@ runs:
     - name: Fetch Lock Info from DynamoDB
       id: get-lock-info
       run: |
+        set +e
         aws dynamodb get-item \
           --table-name "${{ inputs.dynamodb_table }}" \
           --key '{"LockID": {"S": "${{ inputs.lock_key }}"}}' \
           --projection-expression "Info" \
           --output json > lock_item.json
-        
+
         lock_id=$(jq -r '.Item.Info.S | fromjson | .ID' lock_item.json)
         if [ -z "$lock_id" ] || [ "$lock_id" = "null" ]; then
           echo "No lock found. Skipping force-unlock."
