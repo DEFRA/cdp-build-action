@@ -1,13 +1,8 @@
 name: 'Get Scoped GitHub Token'
 
 description: >
-  Gets a scoped, short-lived GitHub App installation token from the CDP
-  token service (mono-lambda).  The token is restricted to the calling
-  repository and expires in ~1 hour.
-
-  Unlike the original get-github-token action, the GitHub App private key
-  is never pulled down to the runner.  Token minting happens inside AWS,
-  and the caller's identity is verified from their already-assumed IAM role.
+  Gets a scoped, short-lived GitHub App installation token from the mono-lambda get-github-token module.
+  The token is restricted to the calling repository and expires in ~1 hour.
 
 inputs:
   token_service_url:
@@ -18,10 +13,9 @@ inputs:
   role_to_assume:
     description: >
       IAM role ARN to assume before calling the token service.
-      Must be a role that is permitted in the API Gateway resource policy
-      (api_gateway_allowed_principal_arns in cdp-mono-lambda.tf).
-      The STS session name from the OIDC exchange encodes the calling repo —
-      this is what the Lambda uses to determine which repo gets the token.
+      Must be a role that is permitted in the API Gateway resource policy.
+      The STS session name from the OIDC exchange encodes the calling repo.
+      This is what the Lambda uses to determine which repo gets the token.
     required: true
   aws_region:
     description: AWS region for SigV4 signing
@@ -41,17 +35,11 @@ outputs:
 runs:
   using: "composite"
   steps:
-    # ── Assume the specified IAM role ────────────────────────────────────────
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-region: ${{ inputs.aws_region }}
         role-to-assume: ${{ inputs.role_to_assume }}
-
-    # ── Call the token service with SigV4-signed request ────────────────────
-    - name: Install boto3
-      shell: bash
-      run: pip install --quiet --disable-pip-version-check boto3
 
     - name: Get scoped GitHub token
       id: get-token
@@ -61,7 +49,6 @@ runs:
         AWS_REGION_NAME: ${{ inputs.aws_region }}
       run: python "$GITHUB_ACTION_PATH/get_token.py"
 
-    # ── Export GH_TOKEN and configure git ───────────────────────────────────
     - name: Export token and configure git
       shell: bash
       env:
