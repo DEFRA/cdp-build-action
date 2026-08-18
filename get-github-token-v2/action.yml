@@ -49,70 +49,17 @@ runs:
         role-to-assume: ${{ inputs.role_to_assume }}
 
     # ── Call the token service with SigV4-signed request ────────────────────
+    - name: Install boto3
+      shell: bash
+      run: pip install --quiet --disable-pip-version-check boto3
+
     - name: Get scoped GitHub token
       id: get-token
-      shell: python
+      shell: bash
       env:
         TOKEN_SERVICE_URL: ${{ inputs.token_service_url }}
         AWS_REGION_NAME: ${{ inputs.aws_region }}
-      run: |
-        import json
-        import os
-        import sys
-        import urllib.error
-        import urllib.request
-
-        import boto3
-        from botocore.auth import SigV4Auth
-        from botocore.awsrequest import AWSRequest
-
-        url = os.environ["TOKEN_SERVICE_URL"]
-        region = os.environ["AWS_REGION_NAME"]
-
-        session = boto3.Session()
-        credentials = session.get_credentials()
-
-        request = AWSRequest(
-            method="POST",
-            url=url,
-            data="{}",
-            headers={"Content-Type": "application/json"},
-        )
-        SigV4Auth(credentials, "execute-api", region).add_auth(request)
-
-        http_request = urllib.request.Request(
-            url=url,
-            data=b"{}",
-            headers=dict(request.headers),
-            method="POST",
-        )
-
-        try:
-            with urllib.request.urlopen(http_request) as resp:
-                raw = json.loads(resp.read())
-        except urllib.error.HTTPError as exc:
-            print(f"::error::Token service returned HTTP {exc.code}: {exc.read().decode()}", file=sys.stderr)
-            sys.exit(1)
-
-        # The mono-lambda wraps its response as {"statusCode": 200, "body": {...}}
-        body = raw.get("body", raw)
-        if isinstance(body, str):
-            body = json.loads(body)
-
-        if "token" not in body:
-            print(f"::error::Unexpected response from token service: {raw}", file=sys.stderr)
-            sys.exit(1)
-
-        token = body["token"]
-        repo = body.get("repository", "unknown")
-        expires_at = body.get("expires_at", "unknown")
-
-        print(f"::notice::Scoped token issued for {repo}, expires {expires_at}")
-
-        # Write token as a step output — mask it first
-        print(f"::add-mask::{token}")
-        with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
-            fh.write(f"token={token}\n")
+      run: python "$GITHUB_ACTION_PATH/get_token.py"
 
     # ── Export GH_TOKEN and configure git ───────────────────────────────────
     - name: Export token and configure git
