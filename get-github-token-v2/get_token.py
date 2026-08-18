@@ -127,12 +127,24 @@ http_request = urllib.request.Request(
     method="POST",
 )
 
+# We read the body in both the success and error cases and check for a token.
+raw = None
+http_status = 200
+
 try:
     with urllib.request.urlopen(http_request) as resp:
+        http_status = resp.status
         raw = json.loads(resp.read())
 except urllib.error.HTTPError as exc:
-    print(f"::error::Token service returned HTTP {exc.code}: {exc.read().decode()}", file=sys.stderr)
-    sys.exit(1)
+    http_status = exc.code
+    try:
+        raw = json.loads(exc.read().decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        print(
+            f"::error::Token service returned HTTP {http_status} with unparseable body",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 # The mono-lambda wraps its response as {"statusCode": 200, "body": {...}}
 response_body = raw.get("body", raw)
@@ -140,8 +152,16 @@ if isinstance(response_body, str):
     response_body = json.loads(response_body)
 
 if "token" not in response_body:
-    print(f"::error::Unexpected response from token service: {raw}", file=sys.stderr)
+    print(f"::error::Token service returned HTTP {http_status}: {raw}", file=sys.stderr)
     sys.exit(1)
+
+if http_status != 200:
+    print(
+        f"::warning::Token service returned outer HTTP {http_status} "
+        f"(inner Lambda statusCode={raw.get('statusCode', 'unknown')}) — "
+        "token was issued successfully. Check API GW response mapping in cdp-tf-core.",
+        file=sys.stderr,
+    )
 
 token = response_body["token"]
 repos = response_body.get("repositories", repositories)
