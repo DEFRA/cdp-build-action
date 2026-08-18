@@ -1,13 +1,11 @@
 """
-Request a scoped GitHub App installation token from mono-lambda via API GW.
-
-Called by the get-github-token-v2 composite action.
-AWS credentials are read from environment variables already
-set by configure-aws-credentials.
+Request a scoped GitHub App installation token from the CDP token service.
 
 Environment variables (injected by action.yml):
   TOKEN_SERVICE_URL   Full URL of the /github/token endpoint
   AWS_REGION_NAME     AWS region for SigV4 signing (default: eu-west-2)
+  REPOSITORIES        Comma-separated repo short names, e.g. "cdp-opensearch-svc"
+                      or "cdp-tf-svc-infra,cdp-tf-waf" for orchestrators
 
 AWS credential env vars (set by configure-aws-credentials):
   AWS_ACCESS_KEY_ID
@@ -106,15 +104,20 @@ def _sigv4_headers(
     return result
 
 
-# Main 
-
+# main
 url = os.environ["TOKEN_SERVICE_URL"]
 region = os.environ.get("AWS_REGION_NAME", "eu-west-2")
 access_key = os.environ["AWS_ACCESS_KEY_ID"]
 secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
 session_token = os.environ.get("AWS_SESSION_TOKEN", "")
 
-body = "{}"
+# Parse the comma-separated repositories list
+repositories = [r.strip() for r in os.environ["REPOSITORIES"].split(",") if r.strip()]
+if not repositories:
+    print("::error::REPOSITORIES env var is empty — cannot determine which repos to scope the token to", file=sys.stderr)
+    sys.exit(1)
+
+body = json.dumps({"repositories": repositories})
 headers = _sigv4_headers("POST", url, body, region, "execute-api", access_key, secret_key, session_token)
 
 http_request = urllib.request.Request(
@@ -141,10 +144,10 @@ if "token" not in response_body:
     sys.exit(1)
 
 token = response_body["token"]
-repo = response_body.get("repository", "unknown")
+repos = response_body.get("repositories", repositories)
 expires_at = response_body.get("expires_at", "unknown")
 
-print(f"::notice::Scoped token issued for {repo}, expires {expires_at}")
+print(f"::notice::Scoped token issued for {repos}, expires {expires_at}")
 
 print(f"::add-mask::{token}")
 with open(os.environ["GITHUB_OUTPUT"], "a") as fh:

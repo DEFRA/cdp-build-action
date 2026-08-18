@@ -8,15 +8,20 @@ inputs:
   token_service_url:
     description: >
       Full HTTPS URL of the /github/token endpoint, e.g.
-      https://cdp-mono-lambda.api.management.cdp-int.defra.cloud/github/token
+      https://cdp-mono-lambda.api.<env>.cdp-int.defra.cloud/github/token
     required: true
   role_to_assume:
     description: >
-      IAM role ARN to assume before calling the token service.
-      Must be a role that is permitted in the API Gateway resource policy.
-      The STS session name from the OIDC exchange encodes the calling repo.
-      This is what the Lambda uses to determine which repo gets the token.
+      IAM role ARN to assume before calling the API GW
+      Must be a role listed in api_gateway_allowed_principal_arns
     required: true
+  repositories:
+    description: >
+      Comma-separated list of repository names to scope the token to,
+      e.g. "cdp-opensearch-svc" or "cdp-tf-svc-infra,cdp-tf-waf,cdp-grafana-svc".
+      Defaults to the calling repository.
+    required: false
+    default: ${{ github.event.repository.name }}
   aws_region:
     description: AWS region for SigV4 signing
     default: eu-west-2
@@ -47,6 +52,7 @@ runs:
       env:
         TOKEN_SERVICE_URL: ${{ inputs.token_service_url }}
         AWS_REGION_NAME: ${{ inputs.aws_region }}
+        REPOSITORIES: ${{ inputs.repositories }}
       run: python "$GITHUB_ACTION_PATH/get_token.py"
 
     - name: Export token and configure git
