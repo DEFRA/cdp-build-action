@@ -18,6 +18,10 @@ inputs:
     description: 'Whether to download the latest module changes (defaults to true)'
     required: false
     default: 'true'
+  use_plugin_cache:
+    description: Use the Terraform provider plugin cache
+    required: false
+    default: 'true'
 outputs:
   artifact_id:
     description: 'The Artifact ID'
@@ -39,11 +43,11 @@ runs:
       uses: actions/download-artifact@v8.0.1 # Upgrade version here to update all pipelines using this action
       with:
         name: terraform-dir
-        path: ${{ inputs.tf_path }}/.terraform
+        path: ${{ inputs.tf_path }}/.terraform/modules
 
     - name: Set .terraform permissions
       if: inputs.use_persisted_modules == 'true'
-      run: chmod -R 755 ${{ inputs.tf_path }}/.terraform
+      run: chmod -R 755 ${{ inputs.tf_path }}/.terraform/modules
       shell: bash
 
     # Install Terraform CLI pinned version
@@ -51,6 +55,16 @@ runs:
       uses: hashicorp/setup-terraform@v4
       with:
         terraform_version: "1.12.2"
+
+    # If enabled, configure terraform provider cache for faster provider downloads
+    - name: Configure Terraform provider cache
+      if: inputs.use_plugin_cache == 'true'
+      shell: bash
+      run: |
+        TF_PLUGIN_CACHE_DIR="$HOME/.terraform.d/plugin-cache"
+        mkdir -p "$TF_PLUGIN_CACHE_DIR"
+        echo "TF_PLUGIN_CACHE_DIR=$TF_PLUGIN_CACHE_DIR" >> "$GITHUB_ENV"
+        echo "TF_PLUGIN_CACHE_MAY_BREAK_DEPENDENCY_LOCK_FILE=true" >> "$GITHUB_ENV"
 
       # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
@@ -66,7 +80,7 @@ runs:
       uses: actions/upload-artifact@v7.0.1 # Upgrade version here to update all pipelines using this action
       with:
         name: terraform-dir
-        path: ${{ inputs.tf_path }}/.terraform
+        path: ${{ inputs.tf_path }}/.terraform/modules
         if-no-files-found: error
         include-hidden-files: true
         retention-days: 1
