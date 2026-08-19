@@ -50,7 +50,7 @@ def _sigv4_headers(
     host = parsed.netloc
     path = parsed.path or "/"
 
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
     amzdate = now.strftime("%Y%m%dT%H%M%SZ")
     datestamp = now.strftime("%Y%m%d")
 
