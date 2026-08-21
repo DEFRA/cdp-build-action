@@ -1,0 +1,88 @@
+name: 'Get Scoped GitHub Token'
+
+description: >
+  Gets a scoped, short-lived GitHub App installation token from the mono-lambda get-github-token module.
+  The token is restricted to the calling repository and expires in ~1 hour.
+
+inputs:
+  token_service_url:
+    description: >
+      Full HTTPS URL of the /github/token endpoint, e.g.
+      https://cdp-mono-lambda.api.<env>.cdp-int.defra.cloud/github/token
+    required: true
+  role_to_assume:
+    description: >
+      IAM role ARN to assume before calling the API GW
+      Must be a role listed in api_gateway_allowed_principal_arns
+    required: true
+  repositories:
+    description: >
+      Comma-separated list of repository names to scope the token to,
+      e.g. "cdp-opensearch-svc" or "cdp-tf-svc-infra,cdp-tf-waf,cdp-grafana-svc".
+      Defaults to the calling repository.
+    required: false
+    default: ${{ github.event.repository.name }}
+  aws_region:
+    description: AWS region for SigV4 signing
+    default: eu-west-2
+  username:
+    description: Git user.name to configure (optional)
+    required: false
+  email:
+    description: Git user.email to configure (optional)
+    required: false
+
+outputs:
+  token:
+    description: Scoped GitHub App installation token (also set as GH_TOKEN env var)
+    value: ${{ steps.get-token.outputs.token }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        aws-region: ${{ inputs.aws_region }}
+        role-to-assume: ${{ inputs.role_to_assume }}
+
+    - name: Get scoped GitHub token
+      id: get-token
+      shell: bash
+      env:
+        TOKEN_SERVICE_URL: ${{ inputs.token_service_url }}
+        AWS_REGION_NAME: ${{ inputs.aws_region }}
+        REPOSITORIES: ${{ inputs.repositories }}
+      run: python "$GITHUB_ACTION_PATH/get_token.py"
+
+    - name: Export token and configure git
+      shell: bash
+      env:
+        TOKEN: ${{ steps.get-token.outputs.token }}
+        USERNAME: ${{ inputs.username }}
+        EMAIL: ${{ inputs.email }}
+      run: |
+        echo "GH_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+        GLOBAL_GIT_CONFIG_FILE="${RUNNER_TEMP}/cdp-gitconfig"
+        echo "GIT_CONFIG_GLOBAL=${GLOBAL_GIT_CONFIG_FILE}" >> "$GITHUB_ENV"
+        echo "GIT_TERMINAL_PROMPT=0" >> "$GITHUB_ENV"
+
+        export GIT_CONFIG_GLOBAL="${GLOBAL_GIT_CONFIG_FILE}"
+        export GIT_TERMINAL_PROMPT=0
+
+        rm -f "${GLOBAL_GIT_CONFIG_FILE}"
+
+        if [ -d ".git" ]; then
+          git config --local --unset-all http.https://github.com/.extraheader || true
+        fi
+
+        git config --file "${GLOBAL_GIT_CONFIG_FILE}" \
+          url."https://x-access-token:${TOKEN}@github.com".insteadOf "https://github.com"
+
+        if [ -n "$USERNAME" ]; then
+          git config --global user.name "$USERNAME"
+        fi
+        if [ -n "$EMAIL" ]; then
+          git config --global user.email "$EMAIL"
+        fi
