@@ -21,7 +21,7 @@ inputs:
   use_plugin_cache:
     description: Use the Terraform provider plugin cache
     required: false
-    default: 'true'
+    default: 'false'
 outputs:
   artifact_id:
     description: 'The Artifact ID'
