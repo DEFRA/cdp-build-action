@@ -83,8 +83,8 @@ runs:
         push: ${{ inputs.push }}
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
-          ${{ inputs.dockerhub == 'true' && format('defradigital/{0}:{1}', inputs.image-name, steps.version.outputs.new_tag || inputs.version) || '' }}
-          ${{ inputs.dockerhub == 'true' && format('defradigital/{0}:latest', inputs.image-name) || '' }}
+          ${{ inputs.push-dockerhub == 'true' && format('defradigital/{0}:{1}', inputs.image-name, steps.version.outputs.new_tag || inputs.version) || '' }}
+          ${{ inputs.push-dockerhub == 'true' && format('defradigital/{0}:latest', inputs.image-name) || '' }}
         labels: |
           defra.cdp.git.repo.url=${{ github.server_url }}/${{ github.repository }}
           defra.cdp.git.repo.name=${{ github.repository }}

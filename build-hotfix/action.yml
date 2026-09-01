@@ -89,7 +89,7 @@ runs:
         sbom: false
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag }}
-          ${{ inputs.dockerhub == 'true' && format('defradigital/{0}:{1}', inputs.image-name, steps.version.outputs.new_tag || inputs.version) || '' }}
+          ${{ inputs.push-dockerhub == 'true' && format('defradigital/{0}:{1}', inputs.image-name, steps.version.outputs.new_tag || inputs.version) || '' }}
         labels: |
           defra.cdp.git.repo.url=${{ github.server_url }}/${{ github.repository }}
           defra.cdp.git.repo.name=${{ github.repository }}
