@@ -15,6 +15,10 @@ inputs:
     description: 'push docker image after building'
     required: false
     default: true
+  push-dockerhub:
+    description: 'push image public dockerhub'
+    required: false
+    default: true
   push-build-stages:
     description: 'push stages in multistage build'
     required: false
@@ -79,14 +83,13 @@ runs:
         push: ${{ inputs.push }}
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
-          defradigital/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
-          defradigital/${{ inputs.image-name }}:latest
+          ${{ inputs.dockerhub == 'true' && format('defradigital/{0}:{1}', inputs.image-name, steps.version.outputs.new_tag || inputs.version) || '' }}
+          ${{ inputs.dockerhub == 'true' && format('defradigital/{0}:latest', inputs.image-name) || '' }}
         labels: |
           defra.cdp.git.repo.url=${{ github.server_url }}/${{ github.repository }}
           defra.cdp.git.repo.name=${{ github.repository }}
           defra.cdp.service.name=${{ inputs.image-name }}
           defra.cdp.build.run_id=${{ github.run_id }}
-          defra.cdp.run_mode=service
           git.hash=${{ github.sha }}
 
     - name: commit-version
