@@ -22,10 +22,10 @@ jobs:
 	runs-on: ubuntu-latest
 	steps:
   	- name: Check out code
-    	uses: actions/checkout@v4
+    	uses: actions/checkout@v5
 
   	- name: Build and Publish
-    	uses: defra-cdp-sandpit/cdp-build-action/build@main
+    	uses: DEFRA/cdp-build-action/build@main
     	with:
       	github-token: ${{ secrets.GITHUB_TOKEN }}
 ```

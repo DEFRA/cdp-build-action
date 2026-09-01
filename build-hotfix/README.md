@@ -21,7 +21,7 @@ jobs:
     	uses: actions/checkout@v4
 
   	- name: Build and Publish
-    	uses: defra-cdp-sandpit/cdp-build-action/build@main
+    	uses: DEFRA/cdp-build-action/build@main
     	with:
       	github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -43,3 +43,7 @@ Overrides the name of the docker image. By default it will use the name of the g
 
 Sets whether the image will be published to the docker registries. Defaults to true, setting this value to false allows the build action to be used as a dry run/build test.
 
+`push-dockerhub`
+
+When set to `false` prevents the repo pushing a copy of the build to the public DEFRA digital dockerhub.
+Defaults to `true` when not set.
