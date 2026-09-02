@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/DEFRA/cdp-build-action/compare/v1.1.0...v1.2.0) (2026-09-01)
+
+
+### Features
+
+* Core 3873 ([#121](https://github.com/DEFRA/cdp-build-action/issues/121)) ([45c549e](https://github.com/DEFRA/cdp-build-action/commit/45c549e54b5a71165c79c8656352446bf4bbc919))
+
 ## [1.1.0](https://github.com/DEFRA/cdp-build-action/compare/v1.0.0...v1.1.0) (2026-07-22)
 
 
