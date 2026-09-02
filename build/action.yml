@@ -29,6 +29,10 @@ inputs:
   secret-manager-docker-credentials:
     description: Secret for Github Actions to run Terraform
     default: cdp/platform/gh_actions
+  build-secrets:
+    description: 'newline separated ID=VALUE pairs exposed to the docker build as BuildKit secret mounts'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -81,6 +85,7 @@ runs:
         sbom: false
         file: ./Dockerfile
         push: ${{ inputs.push }}
+        secrets: ${{ inputs.build-secrets }}
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
           ${{ inputs.push-dockerhub == 'true' && format('defradigital/{0}:{1}', inputs.image-name, steps.version.outputs.new_tag || inputs.version) || '' }}
@@ -109,6 +114,7 @@ runs:
         VERSION: ${{ steps.version.outputs.new_tag || inputs.version }}
         RUN_ID: ${{ github.run_id }}
         GITHUB_HASH: ${{ github.sha }}
+        BUILD_SECRETS: ${{ inputs.build-secrets }}
       run: |
         STAGES=()
         while read -r line; do
@@ -124,13 +130,25 @@ runs:
           exit 0
         fi
         
-        for stage in "${STAGES[@]}"; do
+        SECRET_FLAGS=()
+          secret_index=0
+          while IFS= read -r build_secret; do
+            [[ -z "${build_secret// }" ]] && continue
+            secret_id="${build_secret%%=*}"
+            secret_var="CDP_BUILD_SECRET_${secret_index}"
+            export "${secret_var}=${build_secret#*=}"
+            SECRET_FLAGS+=(--secret "id=${secret_id},env=${secret_var}")
+            secret_index=$((secret_index + 1))
+          done <<< "$BUILD_SECRETS"
+
+          for stage in "${STAGES[@]}"; do
           echo "Building stage: $stage"
         
           docker buildx build \
             --file Dockerfile \
             --target "$stage" \
             --push \
+            ${SECRET_FLAGS[@]}" \
             --provenance=false \
             --sbom=false \
             --no-cache \
