@@ -7,6 +7,10 @@ Environment variables (injected by action.yml):
   REPOSITORIES        Comma-separated repo short names, e.g. "cdp-opensearch-svc"
                       or "cdp-tf-svc-infra,cdp-tf-waf" for orchestrators
 
+GitHub Actions OIDC variables (available in runner only when id-token: write is granted):
+  ACTIONS_ID_TOKEN_REQUEST_URL    One-time endpoint to request the OIDC JWT
+  ACTIONS_ID_TOKEN_REQUEST_TOKEN  Bearer token to authenticate the OIDC request
+
 AWS credential env vars (set by configure-aws-credentials):
   AWS_ACCESS_KEY_ID
   AWS_SECRET_ACCESS_KEY
@@ -22,6 +26,54 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+
+
+def _get_github_oidc_token(audience: str) -> str | None:
+    """
+    Fetch a GitHub OIDC JWT for the current workflow run.
+
+    This proves to the lambda which repository is making the request.
+    Only works when the calling workflow has granted ``id-token: write``
+    permission.
+
+    Args:
+        audience: The ``aud`` claim to embed in the JWT.
+                  We use ``https://github.com/DEFRA`` so the lambda can
+                  verify it was issued specifically for the CDP token service.
+
+    Returns:
+        A signed JWT string, or None if OIDC is not available.
+    """
+    request_url = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL")
+    request_token = os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
+
+    if not request_url or not request_token:
+        print(
+            "::notice::oidc_token not sent — ACTIONS_ID_TOKEN_REQUEST_URL not available. "
+            "Add 'permissions: id-token: write' to this workflow to enable "
+            "repo-scoped enforcement.",
+            file=sys.stderr,
+        )
+        return None
+
+    url = f"{request_url}&audience={urllib.parse.quote(audience, safe='')}"
+    req = urllib.request.Request(
+        url,
+        headers={"Authorization": f"Bearer {request_token}"},
+    )
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return json.loads(resp.read())["value"]
+    except Exception as exc:  # noqa: BLE001
+        # OIDC fetch failure must never break token issuance during migration.
+        # The lambda will log the missing token and either warn (dry-run) or
+        # block (enforcement mode), the action itself stays green.
+        print(
+            f"::warning::Failed to fetch GitHub OIDC token: {exc}. "
+            "The request will proceed without it.",
+            file=sys.stderr,
+        )
+        return None
 
 
 def _sign(key: bytes, msg: str) -> bytes:
@@ -117,7 +169,14 @@ if not repositories:
     print("::error::REPOSITORIES env var is empty — cannot determine which repos to scope the token to", file=sys.stderr)
     sys.exit(1)
 
-body = json.dumps({"repositories": repositories})
+# Fetch the GitHub OIDC token to prove which repo this workflow is running in
+oidc_token = _get_github_oidc_token("https://github.com/DEFRA")
+
+body_dict = {"repositories": repositories}
+if oidc_token is not None:
+    body_dict["oidc_token"] = oidc_token
+
+body = json.dumps(body_dict)
 headers = _sigv4_headers("POST", url, body, region, "execute-api", access_key, secret_key, session_token)
 
 http_request = urllib.request.Request(
