@@ -145,6 +145,7 @@ runs:
           secret_id="${build_secret%%=*}"
           secret_var="CDP_BUILD_SECRET_${secret_index}"
           export "${secret_var}=${build_secret#*=}"
+          echo "::add-mask::$secret_var"
           SECRET_FLAGS+=(--secret "id=${secret_id},env=${secret_var}")
           secret_index=$((secret_index + 1))
         done <<< "$BUILD_SECRETS"
