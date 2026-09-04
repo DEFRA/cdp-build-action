@@ -47,3 +47,25 @@ Sets whether the image will be published to the docker registries. Defaults to t
 
 When set to `false` prevents the repo pushing a copy of the build to the public DEFRA digital dockerhub.
 Defaults to `true` when not set.
+
+`build-secrets`
+
+Newline separated `ID=VALUE` pairs exposed to the docker build as BuildKit secrets, including any build stages this action pushes.
+
+```yaml
+        with:
+          build-secrets: |
+            nuget_pat=${{ secrets.GITHUB_TOKEN }}
+```
+
+Read them in the Dockerfile with a secret mount:
+
+```dockerfile
+RUN --mount=type=secret,id=nuget_pat \
+    export DEFRA_NUGET_PAT="$(cat /run/secrets/nuget_pat)" && \
+    dotnet restore
+```
+
+Unlike a build argument, the value is available only for that `RUN` instruction and is not written to the image history, the image config, or the layer, so it does not travel with the pushed image.
+
+Note that a secret is only consumed where the Dockerfile mounts it. A repository moving off writing credentials into a config file before the build has to add the mount at the same time, or the build will fail to authenticate.
