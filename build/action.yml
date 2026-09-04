@@ -149,7 +149,7 @@ runs:
             --file Dockerfile \
             --target "$stage" \
             --push \
-            ${SECRET_FLAGS[@]}" \
+            "${SECRET_FLAGS[@]}" \
             --provenance=false \
             --sbom=false \
             --no-cache \
