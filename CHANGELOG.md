@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0](https://github.com/DEFRA/cdp-build-action/compare/v1.2.0...v1.3.0) (2026-09-04)
+
+
+### Features
+
+* Add secret flags to Docker build command ([#129](https://github.com/DEFRA/cdp-build-action/issues/129)) ([ff3ebed](https://github.com/DEFRA/cdp-build-action/commit/ff3ebed2ab2d08f410368908552c74148f98e189))
+* Adds build secret support ([#124](https://github.com/DEFRA/cdp-build-action/issues/124)) ([57a1aa3](https://github.com/DEFRA/cdp-build-action/commit/57a1aa31e715972d7ca2c1e6e3b04fecd3941324))
+
+
+### Bug Fixes
+
+* close the quote around SECRET_FLAGS in the build-stage loop ([#128](https://github.com/DEFRA/cdp-build-action/issues/128)) ([14c19e4](https://github.com/DEFRA/cdp-build-action/commit/14c19e438bd737d6b3626dae1fd6ca1364d8a86a))
+
 ## [1.2.0](https://github.com/DEFRA/cdp-build-action/compare/v1.1.0...v1.2.0) (2026-09-01)
 
 
