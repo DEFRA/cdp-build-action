@@ -211,8 +211,9 @@ if "token" not in response_body:
 token = response_body["token"]
 repos = response_body.get("repositories", repositories)
 expires_at = response_body.get("expires_at", "unknown")
+permissions = response_body.get("permissions", {})
 
-print(f"::notice::Scoped token issued for {repos}, expires {expires_at}")
+print(f"::notice::Scoped token issued for {repos}, expires {expires_at}, permissions {permissions}")
 
 print(f"::add-mask::{token}")
 with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
