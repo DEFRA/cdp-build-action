@@ -160,6 +160,7 @@ runs:
             --no-cache \
             --provenance=false \
             --sbom=false \
+             "${SECRET_FLAGS[@]}" \
             --tag "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_NAME}:build-stage-${VERSION}-${stage}" \
             --label "defra.cdp.build.run_id=${RUN_ID}" \
             --label "git.hash=${GITHUB_HASH}" \
