@@ -26,6 +26,14 @@ inputs:
   github-token:
     description: Github Token, required for autoversioning
     required: false
+  prerelease:
+    description: Generate an auto-incrementing prerelease tag (for non-main branches)
+    required: false
+    default: "false"
+  prerelease-suffix:
+    description: Label used for the prerelease tag, e.g. dev, rc
+    required: false
+    default: "beta"
   secret-manager-docker-credentials:
     description: Secret for Github Actions to run Terraform
     default: cdp/platform/gh_actions
@@ -75,6 +83,9 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         WITH_V: false
         DRY_RUN: true
+        TAG_CONTEXT: ${{ inputs.prerelease == 'true' && 'branch' || '' }}
+        PRERELEASE: ${{ inputs.prerelease }}
+        PRERELEASE_SUFFIX: ${{ inputs.prerelease == 'true' && inputs.prerelease-suffix || '' }}
 
     - name: Docker Build
       uses: docker/build-push-action@v7
@@ -103,6 +114,9 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         WITH_V: false
+        TAG_CONTEXT: ${{ inputs.prerelease == 'true' && 'branch' || '' }}
+        PRERELEASE: ${{ inputs.prerelease }}
+        PRERELEASE_SUFFIX: ${{ inputs.prerelease == 'true' && inputs.prerelease-suffix || '' }}
 
     - name: Build and push Docker build stages
       if: ${{ inputs.push-build-stages == 'true' }}
