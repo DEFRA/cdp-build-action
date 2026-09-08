@@ -72,6 +72,22 @@ runs:
       shell: bash
       run: git tag --list --merged HEAD --sort=-committerdate --format='%(refname:strip=2) - %(objectname) - %(committerdate)'
 
+    # Derives the prerelease suffix from the branch name (e.g. hotfix/urgent-a -> urgent-a), so
+    # two hotfix branches cut from the same base tag get distinct tags (…-urgent-a.0 vs …-urgent-b.0)
+    # instead of both computing the same plain patch version and colliding.
+    - name: Compute branch-based prerelease suffix
+      id: branch-suffix
+      shell: bash
+      run: |
+        branch="${GITHUB_REF_NAME#hotfix/}"
+        # semver only allows [0-9A-Za-z-] in a prerelease id, so collapse chars like / and _ into hyphens
+        suffix=$(echo "$branch" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
+        if [ -z "$suffix" ]; then
+          suffix="hotfix"
+        fi
+        echo "Branch '${GITHUB_REF_NAME}' -> prerelease suffix '${suffix}'"
+        echo "suffix=${suffix}" >> "$GITHUB_OUTPUT"
+
     - name: auto-version
       id: version
       uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8
@@ -81,6 +97,8 @@ runs:
         DRY_RUN: true
         DEFAULT_BUMP: patch
         TAG_CONTEXT: branch
+        PRERELEASE: true
+        PRERELEASE_SUFFIX: ${{ steps.branch-suffix.outputs.suffix }}
 
     - name: Docker Build
       uses: docker/build-push-action@v7
@@ -111,6 +129,8 @@ runs:
         WITH_V: false
         DEFAULT_BUMP: patch
         TAG_CONTEXT: branch
+        PRERELEASE: true
+        PRERELEASE_SUFFIX: ${{ steps.branch-suffix.outputs.suffix }}
 
     - name: Build and push Docker build stages
       if: ${{ inputs.push-build-stages == 'true' }}
