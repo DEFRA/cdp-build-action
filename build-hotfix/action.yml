@@ -72,16 +72,15 @@ runs:
       shell: bash
       run: git tag --list --merged HEAD --sort=-committerdate --format='%(refname:strip=2) - %(objectname) - %(committerdate)'
 
-    # Derives the prerelease suffix from the branch name (e.g. hotfix/urgent-a -> urgent-a), so
-    # two hotfix branches cut from the same base tag get distinct tags (…-urgent-a.0 vs …-urgent-b.0)
-    # instead of both computing the same plain patch version and colliding.
+    # Derives the prerelease suffix from the branch name (e.g. hotfix-urgent-a -> hotfix-urgent-a), so
+    # two hotfix branches cut from the same base tag get distinct tags (…-hotfix-urgent-a.0 vs
+    # …-hotfix-urgent-b.0) instead of both computing the same plain patch version and colliding.
     - name: Compute branch-based prerelease suffix
       id: branch-suffix
       shell: bash
       run: |
-        branch="${GITHUB_REF_NAME#hotfix/}"
         # semver only allows [0-9A-Za-z-] in a prerelease id, so collapse chars like / and _ into hyphens
-        suffix=$(echo "$branch" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
+        suffix=$(echo "$GITHUB_REF_NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
         if [ -z "$suffix" ]; then
           suffix="hotfix"
         fi
