@@ -75,7 +75,7 @@ Example:
 
 ```yaml
       - name: Build and Publish
-        uses: DEFRA/cdp-build-action/build@main
+        uses: DEFRA/cdp-build-action/build-test@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
