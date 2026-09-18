@@ -63,3 +63,26 @@ git commit -a -m “possible bug fix #patch”
 ```
 
 Would result in 0.55.0 -> 0.55.1
+
+## Prerelease builds
+
+For branch-scoped prerelease tags, set these optional inputs:
+
+- `prerelease: true`
+- `prerelease-suffix: <label>`
+
+Example:
+
+```yaml
+      - name: Build and Publish
+        uses: DEFRA/cdp-build-action/build@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: true
+          prerelease-suffix: new-search
+```
+
+On a branch, this produces tags like `1.6.0-new-search.0`, then `1.6.0-new-search.1` on the next commit to the same
+branch.
+
+Plain releases from `main` are unchanged.

@@ -109,7 +109,7 @@ runs:
           git.hash=${{ github.sha }}
 
     - name: commit-version
-      if: inputs.version == '' && inputs.push
+      if: inputs.version == '' && (inputs.push == 'true' || inputs.push == true)
       uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
