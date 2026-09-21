@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/DEFRA/cdp-build-action/compare/v1.3.0...v1.4.0) (2026-09-21)
+
+
+### Features
+
+* Core 4029 ([#132](https://github.com/DEFRA/cdp-build-action/issues/132)) ([4d21d1b](https://github.com/DEFRA/cdp-build-action/commit/4d21d1bcf50f5971593c9e88c93a3de5b9e29a81))
+
 ## [1.3.0](https://github.com/DEFRA/cdp-build-action/compare/v1.2.0...v1.3.0) (2026-09-08)
 
 
