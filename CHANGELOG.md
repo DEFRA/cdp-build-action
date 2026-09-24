@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/DEFRA/cdp-build-action/compare/v1.4.0...v1.5.0) (2026-09-24)
+
+
+### Features
+
+* Adds build secrets to build-test ([#134](https://github.com/DEFRA/cdp-build-action/issues/134)) ([dd4bb4a](https://github.com/DEFRA/cdp-build-action/commit/dd4bb4a1c82e53cda64f70dbaf028df363d7edf1))
+
 ## [1.4.0](https://github.com/DEFRA/cdp-build-action/compare/v1.3.0...v1.4.0) (2026-09-21)
 
 
