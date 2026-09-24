@@ -26,6 +26,10 @@ inputs:
     description: Label used for the prerelease tag, e.g. dev, rc
     required: false
     default: "beta"
+  build-secrets:
+    description: 'newline separated ID=VALUE pairs exposed to the docker build as BuildKit secret mounts'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -67,6 +71,7 @@ runs:
         sbom: false
         file: ./Dockerfile
         push: ${{ inputs.push }}
+        secrets: ${{ inputs.build-secrets }}
         tags: |
           ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.version.outputs.new_tag || inputs.version }}
         labels: |
