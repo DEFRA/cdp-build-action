@@ -61,7 +61,6 @@ runs:
         TOKEN: ${{ steps.get-token.outputs.token }}
         REPOSITORIES: ${{ inputs.repositories }}
       run: |
-        set -euo pipefail
         attempts=3
         delay=2
         repo="${REPOSITORIES%%,*}"
