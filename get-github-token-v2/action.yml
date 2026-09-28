@@ -55,6 +55,39 @@ runs:
         REPOSITORIES: ${{ inputs.repositories }}
       run: python "$GITHUB_ACTION_PATH/get_token.py"
 
+    - name: Validate token
+      shell: bash
+      env:
+        TOKEN: ${{ steps.get-token.outputs.token }}
+        REPOSITORIES: ${{ inputs.repositories }}
+      run: |
+        attempts=3
+        delay=2
+        repo="${REPOSITORIES%%,*}"
+
+        ok=false
+        for i in $(seq 1 "$attempts"); do
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token ${TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/DEFRA/${repo}")
+
+          if [ "$status" = "200" ]; then
+            ok=true
+            break
+          fi
+
+          echo "Validation attempt $i for $repo returned $status, retrying in ${delay}s..."
+          sleep "$delay"
+        done
+
+        if [ "$ok" != "true" ]; then
+          echo "::error::Token failed to validate against $repo after $attempts attempts"
+          echo "continuing anyway..."
+        else
+          echo "Token validated successfully."
+        fi
+
     - name: Export token and configure git
       shell: bash
       env:
