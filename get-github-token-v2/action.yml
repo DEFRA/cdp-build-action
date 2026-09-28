@@ -67,6 +67,7 @@ runs:
 
         ok=false
         for i in $(seq 1 "$attempts"); do
+          sleep "$delay"
           status=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: token ${TOKEN}" \
             -H "Accept: application/vnd.github+json" \
@@ -78,7 +79,6 @@ runs:
           fi
 
           echo "Validation attempt $i for $repo returned $status, retrying in ${delay}s..."
-          sleep "$delay"
         done
 
         if [ "$ok" != "true" ]; then
