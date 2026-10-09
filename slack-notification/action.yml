@@ -1,0 +1,139 @@
+name: 'Slack Notification'
+description: 'Send a notification to slack'
+
+inputs:
+  channel:
+    description: 'Name of the slack channel (e.g. cdp-infra-notifications)'
+    required: false
+    default: 'cdp-infra-notifications'
+  colour:
+    description: 'Hex color code for the Slack message sidebar (e.g. #2EB67D for success, #ECB22E for warning, or #E01E5A for failure)'
+    required: false
+    default: '#2EB67D'
+  icon_url:
+    description: 'URL of the icon displayed alongside the title in the Slack message context'
+    required: false
+    default: ''
+  title:
+    description: 'Title displayed alongside the image in the Slack message context. Supports Slack mrkdwn formatting'
+    required: false
+    default: ''
+  header:
+    description: 'Header text displayed prominently in the Slack message'
+    required: false
+    default: ''
+  message:
+    description: 'Main notification message body. Supports Slack mrkdwn formatting'
+    required: true
+  footer:
+    description: 'Footer text displayed in the Slack message context. Supports Slack mrkdwn formatting'
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v6.1.1
+      env:
+        AWS_REGION: eu-west-2
+        AWS_ACCOUNT_ID: "094954420758"
+      with:
+        aws-region: ${{ env.AWS_REGION }}
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions-role
+
+    - name: Send Slack Notification
+      shell: bash
+      env:
+        SLACK_CHANNEL: ${{ inputs.channel }}
+        SLACK_COLOUR: ${{ inputs.colour }}
+        SLACK_ICON_URL: ${{ inputs.icon_url }}
+        SLACK_TITLE: ${{ inputs.title }}
+        SLACK_HEADER: ${{ inputs.header }}
+        SLACK_BODY: ${{ inputs.message }}
+        SLACK_FOOTER: ${{ inputs.footer }}
+      run: |
+        set -euo pipefail
+
+        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+        SLACK_MESSAGE=$(jq -n \
+          --arg channel "$SLACK_CHANNEL" \
+          --arg colour "$SLACK_COLOUR" \
+          --arg image_url "$SLACK_ICON_URL" \
+          --arg title "$SLACK_TITLE" \
+          --arg header "$SLACK_HEADER" \
+          --arg message "$SLACK_BODY" \
+          --arg footer "$SLACK_FOOTER" \
+        '{
+            channel: $channel,
+            attachments: [
+            {
+              color: $colour,
+              blocks: ([
+              {
+                type: "context",
+                elements: [
+                {
+                  type: "image",
+                  image_url: $icon_url,
+                  alt_text: $title
+                },
+                {
+                  type: "mrkdwn",
+                  text: $title
+                }
+                ]
+              }
+              ]
+              + (if $header != "" then [
+              {
+                type: "header",
+                text: {
+                  type: "plain_text",
+                  text: $header
+                }
+              }
+              ] else [] end)
+              + [
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: $message
+                }
+              }
+              ]
+              + (if $footer != "" then [
+              {
+                type: "context",
+                elements: [
+                {
+                  type: "mrkdwn",
+                  text: $footer
+                }
+                ]
+              }
+              ] else [] end))
+          }
+          ]
+        }'
+        )
+
+        jq -n
+          --arg timestamp "$TIMESTAMP"
+          --argjson slack_message "$SLACK_MESSAGE"
+        '{
+          event_type: "send_slack_notification",
+          timestamp: $timestamp,
+          payload: {
+            team: "platform",
+            message: $slack_message
+          }
+        }' > sns-message.json
+
+        aws sns publish \
+          --topic-arn "arn:aws:sns:${{ env.AWS_REGION }}:${{ env.AWS_ACCOUNT_ID }}:mono-lambda-local-trigger-topic.fifo" \
+          --message file://sns-message.json \
+          --message-group-id cdp-slack-notification \
+          --message-deduplication-id "$TIMESTAMP"
