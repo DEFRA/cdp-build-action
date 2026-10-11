@@ -111,9 +111,9 @@ runs:
         }'
         )
 
-        jq -n
-          --arg timestamp "$TIMESTAMP"
-          --argjson slack_message "$SLACK_MESSAGE"
+        jq -n \
+          --arg timestamp "$TIMESTAMP" \
+          --argjson slack_message "$SLACK_MESSAGE" \
         '{
           event_type: "send_slack_notification",
           timestamp: $timestamp,
@@ -127,4 +127,4 @@ runs:
           --topic-arn "arn:aws:sns:${{ env.AWS_REGION }}:${{ env.AWS_ACCOUNT_ID }}:mono-lambda-local-trigger-topic.fifo" \
           --message file://sns-message.json \
           --message-group-id cdp-slack-notification \
-          --message-deduplication-id "$TIMESTAMP"
+          --message-deduplication-id "$SLACK_TITLE_$TIMESTAMP"
