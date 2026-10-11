@@ -127,4 +127,4 @@ runs:
           --topic-arn "arn:aws:sns:${{ env.AWS_REGION }}:${{ env.AWS_ACCOUNT_ID }}:mono-lambda-local-trigger-topic.fifo" \
           --message file://sns-message.json \
           --message-group-id cdp-slack-notification \
-          --message-deduplication-id "$SLACK_TITLE"_"$TIMESTAMP"
+          --message-deduplication-id "$SLACK_TITLE""$TIMESTAMP"
