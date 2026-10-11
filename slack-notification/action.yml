@@ -91,7 +91,7 @@ runs:
                 type: "section",
                 text: {
                   type: "mrkdwn",
-                  text: $message
+                  text: ($message | gsub("\\\\n"; "\n"))
                 }
               }
               ]
