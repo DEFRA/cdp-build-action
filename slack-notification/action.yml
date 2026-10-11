@@ -33,15 +33,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v6.1.1
-      env:
-        AWS_REGION: eu-west-2
-        AWS_ACCOUNT_ID: "094954420758"
-      with:
-        aws-region: ${{ env.AWS_REGION }}
-        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions-role
-
     - name: Send Slack Notification
       shell: bash
       env:
