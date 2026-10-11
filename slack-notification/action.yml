@@ -51,7 +51,7 @@ runs:
         SLACK_MESSAGE=$(jq -n \
           --arg channel "$SLACK_CHANNEL" \
           --arg colour "$SLACK_COLOUR" \
-          --arg image_url "$SLACK_ICON_URL" \
+          --arg icon_url "$SLACK_ICON_URL" \
           --arg title "$SLACK_TITLE" \
           --arg header "$SLACK_HEADER" \
           --arg message "$SLACK_BODY" \
