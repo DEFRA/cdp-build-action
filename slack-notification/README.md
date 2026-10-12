@@ -19,18 +19,18 @@ Send a slack notification via the mono lambda
 ### Basic Usage
 
 ```yaml
-- name: Checkout code
-  uses: ./cdp-build-action/checkout
+- name: Slack Notification for Version 8.x
+  uses: DEFRA/cdp-build-action/slack-notification@CORE-4131
+  with:
+    channel: "cdp-alert-testing"
+    colour: '#ECB22E'
+    icon_url: 'https://avatars.githubusercontent.com/u/1683025?s=48&v=4'
+    title: 'Percona MongoDB New Release Built'
+    header: 'Percona MongoDB ${{ inputs.percona_version }} built in ECR :mongodb-logo:'
+    message: 'Runbook: https://github.com/DEFRA/cdp-platform-documentation/blob/main/runbooks/mongo-upgrades.md'
+    footer: 'Triggered by: DEFRA/cdp-percona-mongo Build Percona 8x workflow'
+
 ```
-
-## Maintenance
-
-To update the underlying `actions/checkout` version:
-
-1. Edit `action.yml`
-2. Update the version in the `uses:` statement (currently `v5`)
-3. Commit and push changes
-4. All pipelines using this wrapper will automatically use the new version
 
 ## Related Documentation
 
