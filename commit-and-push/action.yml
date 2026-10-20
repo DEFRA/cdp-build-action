@@ -44,15 +44,12 @@ runs:
         while (( attempts < max_attempts )); do
           ((attempts += 1))
 
-          # Add and commit changes, if there are any
+          # Add and commit changes
           git add -A
-
-          if ! git diff --cached --quiet; then
-            git commit -m "$COMMIT_MESSAGE" || exit 1
-          fi
+          git commit -m "$COMMIT_MESSAGE"
 
           # Push to the target branch
-          if git push origin "HEAD:$TARGET_BRANCH"; then
+          if git push origin "$TARGET_BRANCH"; then
             echo "branch_name=$TARGET_BRANCH" >> "$GITHUB_OUTPUT"
             exit 0
           fi
