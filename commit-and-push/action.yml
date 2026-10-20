@@ -46,7 +46,9 @@ runs:
 
           # Add and commit changes
           git add -A
-          git commit -m "$COMMIT_MESSAGE"
+          if ! git diff --cached --quiet; then
+            git commit -m "$COMMIT_MESSAGE"
+          fi
 
           # Push to the target branch
           if git push origin "$TARGET_BRANCH"; then
