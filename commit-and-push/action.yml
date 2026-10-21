@@ -37,23 +37,37 @@ runs:
             COMMIT_MESSAGE="${{ inputs.commit_message }}"
           fi
         fi
-        
+
         attempts=0
-        while (( attempts++ <= 3 )); do
-          # Add, commit, and push changes
-          git add -A && \
-          git commit -m "$COMMIT_MESSAGE" && \
-          
+        max_attempts=3
+
+        while (( attempts < max_attempts )); do
+          ((attempts += 1))
+
+          # Add and commit changes
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "$COMMIT_MESSAGE"
+          fi
+
           # Push to the target branch
           if git push origin "$TARGET_BRANCH"; then
-            echo "branch_name=$TARGET_BRANCH" >> $GITHUB_OUTPUT
+            echo "branch_name=$TARGET_BRANCH" >> "$GITHUB_OUTPUT"
             exit 0
-          else
-            echo "Failed to push changes, retrying..."
+          fi
+
+          if (( attempts < max_attempts )); then
+            echo "Failed to push changes; rebasing onto remote branch before retrying..."
+
+            if ! git pull --rebase origin "$TARGET_BRANCH"; then
+              echo "Failed to rebase onto remote branch."
+              git rebase --abort || true
+              exit 1
+            fi
+
             sleep 1
-            git reset --hard HEAD^
-            git pull origin "$TARGET_BRANCH"
           fi
         done
-        echo "Failed to commit and push after 3 attempts."
+
+        echo "Failed to push changes after $max_attempts attempts."
         exit 1
