@@ -108,4 +108,4 @@ runs:
 
         echo "### API Docs Published :rocket:" >> "$GITHUB_STEP_SUMMARY"
         echo "- **Service:** \`${SERVICE_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
-        echo "- **Version:** \`${TARGET_VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Version:** \`${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
