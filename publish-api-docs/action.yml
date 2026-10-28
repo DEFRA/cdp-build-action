@@ -96,12 +96,14 @@ runs:
         if [ -n "$VERSION" ]; then 
           DEST_URI="s3://${BUCKET_NAME}/api/${SERVICE_NAME}/${VERSION}/"
           echo "Publishing API docs to ${DEST_URI}..."
-          aws s3 sync "$DOCS_PATH" "$DEST_URI" --delete
+          # aws s3 sync "$DOCS_PATH" "$DEST_URI" --delete
+          aws s3 cp "$DOCS_PATH" "$DEST_URI" --recursive
         fi
 
         if [ "$UPDATE_LATEST" = "true" ]; then
           LATEST_URI="s3://${BUCKET_NAME}/api/${SERVICE_NAME}/latest/"
-          aws s3 sync "$DOCS_PATH" "$LATEST_URI" --delete
+          # aws s3 sync "$DOCS_PATH" "$LATEST_URI" --delete
+          aws s3 cp "$DOCS_PATH" "$LATEST_URI" --recursive
         fi
 
         echo "### API Docs Published :rocket:" >> "$GITHUB_STEP_SUMMARY"
