@@ -1,0 +1,109 @@
+name: 'CDP Publish API Docs'
+
+description: 'Publishes and versions API docs to S3.'
+
+inputs:
+  path:
+    description: Path to the API docs rendered as HTML
+    required: true
+  version:
+    description: Override version number
+    required: false
+    default: ''
+  service-name:
+    description: Name of service to publish the docs under to push (defaults to repo name)
+    required: false
+    default: ${{ github.event.repository.name }}
+  bucket:
+    description: Destination S3 Bucket
+    required: true
+    default: "cdp-management-api-docs"
+  github-token:
+    description: Github Token, required for autoversioning
+    required: false
+  update-latest:
+    description: 'Whether to update the /latest/ alias prefix'
+    required: false
+    default: true
+runs:
+  using: "composite"
+  steps:
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        aws-region: ${{ env.AWS_REGION }}
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-${{ inputs.service-name }}-build-role
+
+    - run: aws sts get-caller-identity
+      shell: bash
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        aws-region: ${{ env.AWS_REGION }}
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-${{ inputs.service-name }}-build-role
+
+    - run: aws sts get-caller-identity
+      shell: bash
+
+    - name: Ensure full Git history for tag discovery
+      if: ${{ inputs.version == '' }}
+      shell: bash
+      run: |
+        if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
+          git fetch --unshallow --tags
+        else
+          git fetch --tags
+        fi
+
+    - name: Resolve Version from Git Tags
+      id: version
+      if: ${{ inputs.version == '' }}
+      uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        WITH_V: false
+        DRY_RUN: true
+
+    - name: Upload the API docs to S3
+      shell: bash
+      env:
+        DOCS_PATH: ${{ inputs.path }}
+        SERVICE_NAME: ${{ inputs.service-name }}
+        BUCKET_NAME: ${{ inputs.bucket }}
+        INPUT_VERSION: ${{ inputs.version }}
+        RESOLVED_VERSION: ${{ steps.version.outputs.tag }}
+        FORCE_PUBLISH: ${{ inputs.force }}
+        EVENT_BEFORE: ${{ github.event.before }}
+        EVENT_SHA: ${{ github.sha }}
+        UPDATE_LATEST: ${{ inputs.update-latest }}
+      run: |
+        set -euo pipefail
+
+        # Validate directory existence and content
+        if [ ! -d "$DOCS_PATH" ]; then
+          echo "Error: Directory '$DOCS_PATH' does not exist." >&2
+          exit 1
+        fi
+
+        if [ -z "$(find "$DOCS_PATH" -mindepth 1 -type f -print -quit)" ]; then
+          echo "Error: Directory '$DOCS_PATH' contains no files." >&2
+          exit 1
+        fi
+
+        VERSION="${INPUT_VERSION:-${RESOLVED_VERSION}}"
+        if [ -n "$VERSION" ]; then 
+          DEST_URI="s3://${BUCKET_NAME}/api/${SERVICE_NAME}/${VERSION}/"
+          echo "Publishing API docs to ${DEST_URI}..."
+          aws s3 sync "$DOCS_PATH" "$DEST_URI" --delete
+        fi
+
+        if [ "$UPDATE_LATEST" = "true" ]; then
+          LATEST_URI="s3://${BUCKET_NAME}/api/${SERVICE_NAME}/latest/"
+          aws s3 sync "$DOCS_PATH" "$LATEST_URI" --delete
+        fi
+
+        echo "### API Docs Published :rocket:" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Service:** \`${SERVICE_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Version:** \`${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
