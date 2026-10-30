@@ -42,4 +42,4 @@ runs:
           args+=(--quiet)
         fi
 
-        uv tool run --from "checkov==3.3.9" checkov "${args[@]}"
+        uv tool run --from "checkov==3.4.0" checkov "${args[@]}"
