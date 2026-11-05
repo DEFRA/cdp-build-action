@@ -30,6 +30,39 @@ Most static site generators bake the path a site is served from into its links a
 
 The workflow needs `id-token: write` and the `AWS_REGION` and `AWS_ACCOUNT_ID` env values, to assume the service's build role.
 
+### MkDocs flow example
+
+MkDocs teams can reuse the same publish action and only swap the build step:
+
+```yaml
+- name: Resolve API docs version and changes
+  id: docs
+  uses: DEFRA/cdp-build-action/api-docs-version@main
+  with:
+    paths: |
+      mkdocs.yml
+      docs/
+      .github/workflows/publish-api-docs.yml
+
+- name: Build MkDocs site
+  if: steps.docs.outputs.changed == 'true'
+  run: mkdocs build --site-dir build-docs
+
+- name: Publish API docs (latest)
+  if: steps.docs.outputs.changed == 'true'
+  uses: DEFRA/cdp-build-action/publish-api-docs@main
+  with:
+    path: ./build-docs
+    target: latest
+
+- name: Publish API docs (versioned)
+  if: steps.docs.outputs.changed == 'true'
+  uses: DEFRA/cdp-build-action/publish-api-docs@main
+  with:
+    path: ./build-docs
+    target: ${{ steps.docs.outputs.version }}
+```
+
 
 ## Inputs
 

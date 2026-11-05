@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Features
+
+* CORE-4362 add reusable API docs actions (`api-docs`, `api-docs-build` with `dry-run` for PRs, `api-docs-version`) and MkDocs publish guidance
+
 ## [1.5.0](https://github.com/DEFRA/cdp-build-action/compare/v1.4.0...v1.5.0) (2026-09-24)
 
 
