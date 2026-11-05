@@ -29,7 +29,10 @@ runs:
       run: |
         set -euo pipefail
 
-        VERSION="$(git describe --tags --exact-match HEAD)"
+        if ! VERSION="$(git describe --tags --exact-match HEAD 2>/dev/null)"; then
+          echo "Error: HEAD $(git rev-parse --short HEAD) has no tag. Run on a tagged commit and check out with fetch-depth: 0." >&2
+          exit 1
+        fi
         echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
         CHANGED=true

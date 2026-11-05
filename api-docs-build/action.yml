@@ -48,9 +48,12 @@ runs:
         elif [ -z "${TARGET}" ] || [ "${TARGET}" = "check" ]; then
           echo "Error: set 'target' (e.g. latest or 1.2.3), or 'dry-run: true' to only check the docs." >&2
           exit 1
+        elif ! [[ "${TARGET}" =~ ^[A-Za-z0-9._-]+$ ]] || [ "${TARGET}" = "." ] || [ "${TARGET}" = ".." ]; then
+          echo "Error: target '${TARGET}' must be a single folder name, e.g. 1.2.3 or latest." >&2
+          exit 1
         fi
 
-        docker run --rm \
+        docker run --rm --pull always \
           -v "${REPO_PATH}:/repo" \
           -e SERVICE_NAME="${SERVICE_NAME}" \
           "defradigital/cdp-api-docs-builder:${BUILDER_VERSION}" \
