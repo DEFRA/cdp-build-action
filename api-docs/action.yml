@@ -1,0 +1,68 @@
+name: "CDP API Docs"
+
+description: "Builds and publishes latest and versioned API docs using the shared builder and publish actions."
+
+inputs:
+  paths:
+    description: "Newline-separated paths used to detect docs changes since the previous tag."
+    required: false
+    default: |
+      docs/
+      .github/workflows/publish-api-docs.yml
+  service-name:
+    description: "Name of service to publish docs under."
+    required: false
+    default: ${{ github.event.repository.name }}
+  builder-version:
+    description: "Builder image tag from defradigital/cdp-api-docs-builder."
+    required: false
+    default: latest
+  bucket:
+    description: "Destination S3 bucket."
+    required: false
+    default: cdp-management-api-docs
+
+runs:
+  using: "composite"
+  steps:
+    - name: Resolve version and docs changes
+      id: meta
+      uses: DEFRA/cdp-build-action/api-docs-version@main
+      with:
+        paths: ${{ inputs.paths }}
+
+    - name: Build API docs (latest)
+      id: build_latest
+      if: steps.meta.outputs.changed == 'true'
+      uses: DEFRA/cdp-build-action/api-docs-build@main
+      with:
+        target: latest
+        service-name: ${{ inputs.service-name }}
+        builder-version: ${{ inputs.builder-version }}
+
+    - name: Build API docs (versioned)
+      id: build_versioned
+      if: steps.meta.outputs.changed == 'true'
+      uses: DEFRA/cdp-build-action/api-docs-build@main
+      with:
+        target: ${{ steps.meta.outputs.version }}
+        service-name: ${{ inputs.service-name }}
+        builder-version: ${{ inputs.builder-version }}
+
+    - name: Publish API docs (latest)
+      if: steps.meta.outputs.changed == 'true'
+      uses: DEFRA/cdp-build-action/publish-api-docs@main
+      with:
+        path: ${{ steps.build_latest.outputs.path }}
+        target: latest
+        service-name: ${{ inputs.service-name }}
+        bucket: ${{ inputs.bucket }}
+
+    - name: Publish API docs (versioned)
+      if: steps.meta.outputs.changed == 'true'
+      uses: DEFRA/cdp-build-action/publish-api-docs@main
+      with:
+        path: ${{ steps.build_versioned.outputs.path }}
+        target: ${{ steps.meta.outputs.version }}
+        service-name: ${{ inputs.service-name }}
+        bucket: ${{ inputs.bucket }}

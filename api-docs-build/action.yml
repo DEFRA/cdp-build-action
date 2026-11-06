@@ -1,0 +1,66 @@
+name: "CDP API Docs Build"
+
+description: "Builds API docs for one target using the shared cdp-api-docs-builder image."
+
+inputs:
+  target:
+    description: "Folder the docs will be served from under api/<service-name>/, e.g. latest or 1.2.3. Not needed with dry-run."
+    required: false
+    default: ''
+  dry-run:
+    description: "Build and check the docs, keep nothing. For pull requests."
+    required: false
+    default: 'false'
+  service-name:
+    description: "Service name used in the docs base URL."
+    required: false
+    default: ${{ github.event.repository.name }}
+  builder-version:
+    description: "Builder image tag from defradigital/cdp-api-docs-builder."
+    required: false
+    default: latest
+  repo-path:
+    description: "Absolute path to the checked out tenant repository."
+    required: false
+    default: ${{ github.workspace }}
+
+outputs:
+  path:
+    description: "Folder holding the built site. Empty on a dry run."
+    value: ${{ steps.build.outputs.path }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: build
+      shell: bash
+      env:
+        TARGET: ${{ inputs.target }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        SERVICE_NAME: ${{ inputs.service-name }}
+        BUILDER_VERSION: ${{ inputs.builder-version }}
+        REPO_PATH: ${{ inputs.repo-path }}
+      run: |
+        set -euo pipefail
+
+        if [ "${DRY_RUN}" = "true" ]; then
+          TARGET=check
+        elif [ -z "${TARGET}" ] || [ "${TARGET}" = "check" ]; then
+          echo "Error: set 'target' (e.g. latest or 1.2.3), or 'dry-run: true' to only check the docs." >&2
+          exit 1
+        elif ! [[ "${TARGET}" =~ ^[A-Za-z0-9._-]+$ ]] || [ "${TARGET}" = "." ] || [ "${TARGET}" = ".." ]; then
+          echo "Error: target '${TARGET}' must be a single folder name, e.g. 1.2.3 or latest." >&2
+          exit 1
+        fi
+
+        docker run --rm --pull always \
+          -v "${REPO_PATH}:/repo" \
+          -e SERVICE_NAME="${SERVICE_NAME}" \
+          "defradigital/cdp-api-docs-builder:${BUILDER_VERSION}" \
+          /repo "${TARGET}"
+
+        if [ "${TARGET}" = "check" ]; then
+          echo "path=" >> "$GITHUB_OUTPUT"
+        else
+          echo "path=${REPO_PATH}/build-${TARGET}" >> "$GITHUB_OUTPUT"
+        fi

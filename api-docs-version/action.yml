@@ -1,0 +1,50 @@
+name: "CDP API Docs Version"
+
+description: "Resolves the release tag on HEAD and whether docs-related paths changed since the previous tag."
+
+inputs:
+  paths:
+    description: "Newline-separated paths used to detect docs changes since the previous tag."
+    required: false
+    default: |
+      docs/
+      .github/workflows/publish-api-docs.yml
+
+outputs:
+  version:
+    description: "Release tag on HEAD."
+    value: ${{ steps.detect.outputs.version }}
+  changed:
+    description: "true when docs paths changed since the previous tag, or on manual runs."
+    value: ${{ steps.detect.outputs.changed }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: detect
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        INPUT_PATHS: ${{ inputs.paths }}
+      run: |
+        set -euo pipefail
+
+        if ! VERSION="$(git describe --tags --exact-match HEAD 2>/dev/null)"; then
+          echo "Error: HEAD $(git rev-parse --short HEAD) has no tag. Run on a tagged commit and check out with fetch-depth: 0." >&2
+          exit 1
+        fi
+        echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+        CHANGED=true
+        if [ "${EVENT_NAME}" != "workflow_dispatch" ]; then
+          PREVIOUS="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)"
+          if [ -n "${PREVIOUS}" ]; then
+            mapfile -t PATHS < <(printf '%s\n' "${INPUT_PATHS}" | sed '/^[[:space:]]*$/d')
+            if [ "${#PATHS[@]}" -gt 0 ] && git diff --quiet "${PREVIOUS}" HEAD -- "${PATHS[@]}"; then
+              CHANGED=false
+              echo "No API docs changes since ${PREVIOUS}." >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+        fi
+
+        echo "changed=${CHANGED}" >> "$GITHUB_OUTPUT"
