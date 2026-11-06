@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/DEFRA/cdp-build-action/compare/v1.5.0...v1.6.0) (2026-11-06)
+
+
+### Features
+
+* CORE-4362 Add api-docs, api-docs-build and api-docs-version actions ([#144](https://github.com/DEFRA/cdp-build-action/issues/144)) ([501c6e7](https://github.com/DEFRA/cdp-build-action/commit/501c6e7c1c56eca6f22f279b922cc873d33824f2))
+
 ## [1.5.0](https://github.com/DEFRA/cdp-build-action/compare/v1.4.0...v1.5.0) (2026-09-24)
 
 
