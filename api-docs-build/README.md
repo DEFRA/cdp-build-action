@@ -37,7 +37,7 @@ broken anchors, broken Markdown links, MDX that doesn't compile, and an invalid 
 
 `target`
 
-Folder the docs will be served from under `api/<service-name>/`, e.g. `latest` or `1.2.3`. Required unless `dry-run` is `true`.
+Folder the docs will be served from under `api/<service-name>/` (unless `base-url` is set), e.g. `latest` or `1.2.3`. Required unless `dry-run` is `true`.
 
 `dry-run`
 
@@ -46,6 +46,14 @@ Build and check only, keep nothing. Defaults to `false`.
 `service-name`
 
 Defaults to the repository name.
+
+`base-url`
+
+Optional override for the built site's base URL, for example `/` for
+[cdp-api-docs-site](https://github.com/DEFRA/cdp-api-docs-site), which is published at the bucket root.
+When empty, the default is `/api/<service-name>/<target>/`.
+It must match where the output is uploaded, so don't combine it with `publish-api-docs`,
+which always uploads to `api/<service-name>/<target>/`.
 
 `builder-version`
 
