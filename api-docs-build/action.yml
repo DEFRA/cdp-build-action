@@ -4,7 +4,7 @@ description: "Builds API docs for one target using the shared cdp-api-docs-build
 
 inputs:
   target:
-    description: "Folder the docs will be served from under api/<service-name>/, e.g. latest or 1.2.3. Not needed with dry-run."
+    description: "Folder the docs will be served from under api/<service-name>/ (unless base-url is set), e.g. latest or 1.2.3. Not needed with dry-run."
     required: false
     default: ''
   dry-run:
@@ -23,6 +23,10 @@ inputs:
     description: "Absolute path to the checked out tenant repository."
     required: false
     default: ${{ github.workspace }}
+  base-url:
+    description: "Override docs base URL, e.g. / for a site at the bucket root. Empty uses /api/<service-name>/<target>/."
+    required: false
+    default: ''
 
 outputs:
   path:
@@ -40,6 +44,7 @@ runs:
         SERVICE_NAME: ${{ inputs.service-name }}
         BUILDER_VERSION: ${{ inputs.builder-version }}
         REPO_PATH: ${{ inputs.repo-path }}
+        BASE_URL: ${{ inputs.base-url }}
       run: |
         set -euo pipefail
 
@@ -56,6 +61,7 @@ runs:
         docker run --rm --pull always \
           -v "${REPO_PATH}:/repo" \
           -e SERVICE_NAME="${SERVICE_NAME}" \
+          -e DOCS_BASE_URL="${BASE_URL}" \
           "defradigital/cdp-api-docs-builder:${BUILDER_VERSION}" \
           /repo "${TARGET}"
 
