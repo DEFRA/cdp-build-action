@@ -12,9 +12,9 @@ inputs:
     required: false
     default: true
   push-dockerhub:
-    description: 'push image public dockerhub'
+    description: 'push image public dockerhub (defaults to true for public repos only)'
     required: false
-    default: true
+    default: ${{ github.event.repository.visibility == 'public' }}
   push-build-stages:
     description: 'push stages in multistage build'
     required: false
