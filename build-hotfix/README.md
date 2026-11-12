@@ -45,8 +45,9 @@ Sets whether the image will be published to the docker registries. Defaults to t
 
 `push-dockerhub`
 
-When set to `false` prevents the repo pushing a copy of the build to the public DEFRA digital dockerhub.
-Defaults to `true` when not set.
+Sets whether a copy of the build is pushed to the public DEFRA digital dockerhub.
+When not set, defaults to `true` for public repositories and `false` for private and internal ones.
+Set it to `true` to push a private or internal repository's image anyway.
 
 `build-secrets`
 

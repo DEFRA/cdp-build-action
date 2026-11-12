@@ -1,6 +1,6 @@
 name: 'CDP Build Action'
 
-description: 'builds and publishes docker image to ECR and DockerHub'
+description: 'builds and publishes docker image to ECR (and DockerHub for public repos)'
 
 inputs:
   version:
@@ -16,9 +16,9 @@ inputs:
     required: false
     default: true
   push-dockerhub:
-    description: 'push image public dockerhub'
+    description: 'push image public dockerhub (defaults to true for public repos only)'
     required: false
-    default: true
+    default: ${{ github.event.repository.visibility == 'public' }}
   push-build-stages:
     description: 'push stages in multistage build'
     required: false
@@ -64,6 +64,7 @@ runs:
         parse-json-secrets: true
 
     - name: Login to Docker Hub
+      if: inputs.push-dockerhub == 'true'
       uses: docker/login-action@v4
       with:
         username: ${{ env.DOCKER_USERNAME}}
