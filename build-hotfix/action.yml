@@ -1,6 +1,6 @@
 name: 'CDP Build Hot Fix Action'
 
-description: 'Builds and publishes docker image to ECR and DockerHub from a branch as a patch release'
+description: 'Builds and publishes docker image to ECR (and DockerHub for public repos) from a branch as a patch release'
 
 inputs:
   image-name:
@@ -57,6 +57,7 @@ runs:
         parse-json-secrets: true
 
     - name: Login to Docker Hub
+      if: inputs.push-dockerhub == 'true'
       uses: docker/login-action@v4
       with:
         username: ${{ env.DOCKER_USERNAME}}
