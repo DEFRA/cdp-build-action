@@ -164,10 +164,7 @@ secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
 session_token = os.environ.get("AWS_SESSION_TOKEN", "")
 
 # Parse the comma-separated repositories list
-repositories = [r.strip() for r in os.environ["REPOSITORIES"].split(",") if r.strip()]
-if not repositories:
-    print("::error::REPOSITORIES env var is empty — cannot determine which repos to scope the token to", file=sys.stderr)
-    sys.exit(1)
+repositories = [r.strip() for r in os.environ.get("REPOSITORIES", "").split(",") if r.strip()]
 
 # Fetch the GitHub OIDC token to prove which repo this workflow is running in
 oidc_token = _get_github_oidc_token("https://github.com/DEFRA")
