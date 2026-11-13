@@ -19,9 +19,8 @@ inputs:
     description: >
       Comma-separated list of repository names to scope the token to,
       e.g. "cdp-opensearch-svc" or "cdp-tf-svc-infra,cdp-tf-waf,cdp-grafana-svc".
-      Defaults to the calling repository.
+      If unset provides the default permissions for the repo.
     required: false
-    default: ${{ github.event.repository.name }}
   aws_region:
     description: AWS region for SigV4 signing
     default: eu-west-2
