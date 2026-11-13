@@ -174,6 +174,7 @@ if oidc_token is not None:
     body_dict["oidc_token"] = oidc_token
 
 body = json.dumps(body_dict)
+print(repositories)
 headers = _sigv4_headers("POST", url, body, region, "execute-api", access_key, secret_key, session_token)
 
 http_request = urllib.request.Request(
