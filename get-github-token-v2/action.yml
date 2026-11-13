@@ -21,6 +21,7 @@ inputs:
       e.g. "cdp-opensearch-svc" or "cdp-tf-svc-infra,cdp-tf-waf,cdp-grafana-svc".
       If unset provides the default permissions for the repo.
     required: false
+    default: ''
   aws_region:
     description: AWS region for SigV4 signing
     default: eu-west-2
