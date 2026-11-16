@@ -170,8 +170,7 @@ repositories = [r.strip() for r in os.environ.get("REPOSITORIES", "").split(",")
 oidc_token = _get_github_oidc_token("https://github.com/DEFRA")
 
 body_dict = {}
-if repositories:
-    body_dict["repositories"] = repositories
+
 if oidc_token is not None:
     body_dict["oidc_token"] = oidc_token
 
