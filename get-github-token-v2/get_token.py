@@ -169,7 +169,9 @@ repositories = [r.strip() for r in os.environ.get("REPOSITORIES", "").split(",")
 # Fetch the GitHub OIDC token to prove which repo this workflow is running in
 oidc_token = _get_github_oidc_token("https://github.com/DEFRA")
 
-body_dict = {}
+body_dict: dict[str, str|list] = {
+    "repositories": []
+}
 
 if oidc_token is not None:
     body_dict["oidc_token"] = oidc_token
