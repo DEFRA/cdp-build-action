@@ -23,6 +23,7 @@ import hmac
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -55,8 +56,9 @@ def _get_github_oidc_token(audience: str) -> str | None:
             file=sys.stderr,
         )
         return None
-
-    url = f"{request_url}&audience={urllib.parse.quote(audience, safe='')}"
+    
+    sep = "&" if "?" in request_url else "?"
+    url = f"{request_url}{sep}audience={urllib.parse.quote(audience, safe='')}"
     req = urllib.request.Request(
         url,
         headers={"Authorization": f"Bearer {request_token}"},
@@ -155,66 +157,129 @@ def _sigv4_headers(
         result["x-amz-security-token"] = session_token
     return result
 
+def _validate_token(
+    token: str,
+    repos: list[str],
+    org: str = "DEFRA",
+    attempts: int = 3,
+    delay: float = 2.0,
+) -> bool:
+    """
+    Verify the newly minted installation token is active on GitHub.
 
-# main
-url = os.environ["TOKEN_SERVICE_URL"]
-region = os.environ.get("AWS_REGION_NAME", "eu-west-2")
-access_key = os.environ["AWS_ACCESS_KEY_ID"]
-secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-session_token = os.environ.get("AWS_SESSION_TOKEN", "")
+    Retries with a short delay to account for eventual consistency across
+    GitHub's edge nodes immediately after token creation.
+    """
+    if not repos:
+        print("::warning::No repositories returned; skipping token validation.")
+        return True
 
-# Parse the comma-separated repositories list
-repositories = [r.strip() for r in os.environ.get("REPOSITORIES", "").split(",") if r.strip()]
+    target_repo = repos[0]
+    url = f"https://api.github.com/repos/{urllib.parse.quote(org)}/{urllib.parse.quote(target_repo)}"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "cdp-get-github-token-action",
+        },
+    )
 
-# Fetch the GitHub OIDC token to prove which repo this workflow is running in
-oidc_token = _get_github_oidc_token("https://github.com/DEFRA")
+    for attempt in range(1, attempts + 1):
+        time.sleep(delay)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                if resp.status == 200:
+                    print(f"Token validated successfully against {org}/{target_repo}.")
+                    return True
+        except urllib.error.HTTPError as exc:
+            print(
+                f"Validation attempt {attempt}/{attempts} for {org}/{target_repo} "
+                f"returned HTTP {exc.code}, retrying in {delay}s..."
+            )
+        except urllib.error.URLError as exc:
+            print(
+                f"Validation attempt {attempt}/{attempts} for {org}/{target_repo} "
+                f"failed ({exc.reason}), retrying in {delay}s..."
+            )
 
-body_dict: dict[str, str|list] = {
-    "repositories": repositories
-}
+    print(
+        f"::error::Token failed to validate against {org}/{target_repo} "
+        f"after {attempts} attempts",
+        file=sys.stderr,
+    )
+    return False
 
-if oidc_token is not None:
-    body_dict["oidc_token"] = oidc_token
 
-body = json.dumps(body_dict)
-headers = _sigv4_headers("POST", url, body, region, "execute-api", access_key, secret_key, session_token)
+def main() -> None:
+    url = os.environ["TOKEN_SERVICE_URL"]
+    region = os.environ.get("AWS_REGION_NAME", "eu-west-2")
+    access_key = os.environ["AWS_ACCESS_KEY_ID"]
+    secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+    session_token = os.environ.get("AWS_SESSION_TOKEN", "")
 
-http_request = urllib.request.Request(
-    url=url,
-    data=body.encode("utf-8"),
-    headers=headers,
-    method="POST",
-)
+    # Parse the comma-separated repositories list
+    repositories = [r.strip() for r in os.environ.get("REPOSITORIES", "").split(",") if r.strip()]
 
-try:
-    with urllib.request.urlopen(http_request) as resp:
-        raw = json.loads(resp.read())
-except urllib.error.HTTPError as exc:
-    body_text = exc.read().decode(errors="replace")
+    # Fetch the GitHub OIDC token to prove which repo this workflow is running in
+    oidc_token = _get_github_oidc_token("https://github.com/DEFRA")
+
+    body_dict: dict[str, str|list] = {
+        "repositories": repositories
+    }
+
+    if oidc_token is not None:
+        body_dict["oidc_token"] = oidc_token
+
+    body = json.dumps(body_dict)
+    headers = _sigv4_headers("POST", url, body, region, "execute-api", access_key, secret_key, session_token)
+
+    http_request = urllib.request.Request(
+        url=url,
+        data=body.encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+
     try:
-        # Surface the Lambda error detail if the body is JSON
-        detail = json.loads(body_text).get("body", body_text)
-    except (json.JSONDecodeError, AttributeError):
-        detail = body_text
-    print(f"::error::Token service returned HTTP {exc.code}: {detail}", file=sys.stderr)
-    sys.exit(1)
+        with urllib.request.urlopen(http_request) as resp:
+            raw = json.loads(resp.read())
+    except urllib.error.HTTPError as exc:
+        body_text = exc.read().decode(errors="replace")
+        try:
+            detail = json.loads(body_text).get("body", body_text)
+        except (json.JSONDecodeError, AttributeError):
+            detail = body_text
+        print(f"::error::Token service returned HTTP {exc.code}: {detail}", file=sys.stderr)
+        sys.exit(1)
+    except urllib.error.URLError as exc:
+        print(f"::error::Failed to reach token service: {exc.reason}", file=sys.stderr)
+        sys.exit(1)        
 
-# The mono-lambda wraps its response as {"statusCode": 200, "body": {...}}
-response_body = raw.get("body", raw)
-if isinstance(response_body, str):
-    response_body = json.loads(response_body)
+    # The mono-lambda wraps its response as {"statusCode": 200, "body": {...}}
+    response_body = raw.get("body", raw)
+    if isinstance(response_body, str):
+        response_body = json.loads(response_body)
 
-if "token" not in response_body:
-    print(f"::error::Unexpected response from token service: {raw}", file=sys.stderr)
-    sys.exit(1)
+    if "token" not in response_body:
+        print(f"::error::Unexpected response from token service: {raw}", file=sys.stderr)
+        sys.exit(1)
 
-token = response_body["token"]
-repos = response_body.get("repositories", repositories)
-expires_at = response_body.get("expires_at", "unknown")
-permissions = response_body.get("permissions", {})
+    token = response_body["token"]
+    repos = response_body.get("repositories", repositories)
+    expires_at = response_body.get("expires_at", "unknown")
+    permissions = response_body.get("permissions", {})
 
-print(f"::notice::Scoped token issued for {repos}, expires {expires_at}, permissions {permissions}")
+    print(f"::add-mask::{token}")
+    print(f"::notice::Scoped token issued for {repos}, expires {expires_at}, permissions {permissions}", flush=True)
 
-print(f"::add-mask::{token}")
-with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
-    fh.write(f"token={token}\n")
+    if not _validate_token(token, repos):
+        print("Continuing anyway...", file=sys.stderr)
+        
+    with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+        fh.write(f"token={token}\n")
+        fh.write(f"repos={','.join(repos)}\n")
+
+if __name__ == "__main__":
+    main()
