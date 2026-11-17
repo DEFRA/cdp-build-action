@@ -175,7 +175,7 @@ def _validate_token(
         return True
 
     target_repo = repos[0]
-    url = f"https://api.github.com/repos/{urllib.parse.quote(org)}/{urllib.parse.quote(target_repo)}"
+    url = f"https://api.github.com/repos/{urllib.parse.quote(target_repo)}"
     req = urllib.request.Request(
         url,
         headers={
