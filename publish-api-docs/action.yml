@@ -30,15 +30,6 @@ runs:
     - run: aws sts get-caller-identity
       shell: bash
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v6
-      with:
-        aws-region: ${{ env.AWS_REGION }}
-        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-${{ inputs.service-name }}-build-role
-
-    - run: aws sts get-caller-identity
-      shell: bash
-
     - name: Upload the API docs to S3
       shell: bash
       env:
