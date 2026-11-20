@@ -77,10 +77,12 @@ runs:
 
         rm -f "${GLOBAL_GIT_CONFIG_FILE}"
 
+        # An empty extraheader resets all earlier ones, including external files,
+        # actions/checkout writes to an included file, which --unset-all can't reach.
         if [ -d ".git" ]; then
-          git config --local --unset-all http.https://github.com/.extraheader || true
+          git config --local --add http.https://github.com/.extraheader ""
         else
-          echo '!! No git repo found! You must run "git config --local --unset-all http.https://github.com/.extraheader || true" after checkout in order to push using this token'
+          echo '!! No git repo found! You must run "git config --local --add http.https://github.com/.extraheader \"\"" after checkout in order to push using this token'
         fi
         git config --file "${GLOBAL_GIT_CONFIG_FILE}" url."https://x-access-token:${{ steps.get-token.outputs.token }}@github.com".insteadOf "https://github.com"
 
