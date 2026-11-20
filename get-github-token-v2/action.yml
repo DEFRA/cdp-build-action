@@ -103,8 +103,10 @@ runs:
 
         rm -f "${GLOBAL_GIT_CONFIG_FILE}"
 
+        # An empty extraheader resets all earlier ones, including headers that
+        # actions/checkout writes to an included file, which --unset-all can't reach.
         if [ -d ".git" ]; then
-          git config --local --unset-all http.https://github.com/.extraheader || true
+          git config --local --add http.https://github.com/.extraheader ""
         fi
 
         git config --file "${GLOBAL_GIT_CONFIG_FILE}" \
