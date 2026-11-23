@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/DEFRA/cdp-build-action/compare/v1.6.0...v1.7.0) (2026-11-23)
+
+
+### Features
+
+* CORE-4463 get-github-token-v2 update ([#152](https://github.com/DEFRA/cdp-build-action/issues/152)) ([0290361](https://github.com/DEFRA/cdp-build-action/commit/029036120175928b2e59b1b1abe09986aa04a597))
+
 ## [1.6.0](https://github.com/DEFRA/cdp-build-action/compare/v1.5.0...v1.6.0) (2026-11-23)
 
 
