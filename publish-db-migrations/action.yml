@@ -1,33 +1,40 @@
 name: 'CDP Publish Database Migrations'
-
 description: 'Publishes and versions liquibase migration files to S3.'
 
 inputs:
   path:
-    description: Path to the database migration files
+    description: 'Path to the database migration files'
     required: true
   version:
-    description: Override version number
+    description: 'Override version number'
     required: false
     default: ''
   service-name:
-    description: Name of service to publish db  to push (defaults to repo name)
+    description: 'Name of service to publish db migrations for (defaults to repo name)'
     required: false
     default: ${{ github.event.repository.name }}
   bucket:
-    description: S3 bucket to upload to
-    required: true
-    default: "cdp-management-database-migrations"
-  github-token:
-    description: Github Token, required for autoversioning
+    description: 'S3 bucket to upload to'
     required: false
+    default: 'cdp-management-database-migrations'
+  github-token:
+    description: 'GitHub token, required for autoversioning'
+    required: false
+    default: ${{ github.token }}
   force:
-    description: Publish
-    default: false
+    description: 'Force publish even if no changes are detected'
+    required: false
+    default: 'false'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
+    - name: Validate required environment
+      shell: bash
+      run: |
+        set -euo pipefail
+        : "${AWS_REGION:?AWS_REGION environment variable must be set}"
+        : "${AWS_ACCOUNT_ID:?AWS_ACCOUNT_ID environment variable must be set}"
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v6
@@ -35,8 +42,15 @@ runs:
         aws-region: ${{ env.AWS_REGION }}
         role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-${{ inputs.service-name }}-build-role
 
-    - run: aws sts get-caller-identity
+    - name: Verify AWS identity
       shell: bash
+      run: aws sts get-caller-identity
+
+    - name: Fetch git history and tags
+      shell: bash
+      run: |
+        set -euo pipefail
+        git fetch --unshallow --tags || git fetch --tags
 
     - name: Get current version
       id: version
@@ -44,80 +58,89 @@ runs:
       uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
-        WITH_V: false
+        TAG_PREFIX: ''
         DRY_RUN: true
 
     - name: Upload the database migration to S3
       shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_FORCE: ${{ inputs.force }}
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_BUCKET: ${{ inputs.bucket }}
+        INPUT_SERVICE_NAME: ${{ inputs.service-name }}
+        STEP_VERSION_TAG: ${{ steps.version.outputs.tag }}
+        EVENT_BEFORE: ${{ github.event.before }}
+        GITHUB_SHA: ${{ github.sha }}
       run: |
+        set -euo pipefail
+
         # Check the path is set correctly
-        if [ ! -d "${{ inputs.path }}" ]; then
-          echo "The path '${{ inputs.path }}' does not exist or is not a directory."
+        if [[ ! -d "$INPUT_PATH" ]]; then
+          echo "The path '$INPUT_PATH' does not exist or is not a directory."
           exit 1
         fi
 
-        if [ -z "$(find "${{ inputs.path }}" -type f -print -quit)" ]; then
-          echo "The directory '${{ inputs.path }}' does not contain any files."
+        if [[ -z "$(find "$INPUT_PATH" -type f -print -quit)" ]]; then
+          echo "The directory '$INPUT_PATH' does not contain any files."
           exit 1
         fi
-        echo "Directory '${{ inputs.path }}' exists and contains at least one file."
+        echo "Directory '$INPUT_PATH' exists and contains at least one file."
 
         # Check if there are any changes in this commit
-        if [ "${{ inputs.force }}" == "false" ]; then
-          echo "Checking for changes in '${{ inputs.path }}'..."
+        if [[ "$INPUT_FORCE" == "false" ]]; then
+          echo "Checking for changes in '$INPUT_PATH'..."
 
-          # Skip if running on a branch and there's nothing new on it
-          if [ "${{ github.event.before }}" == "0000000000000000000000000000000000000000"]; then
-            echo "No changes detected in '${{ inputs.path }}'. Nothing to publish."
-            echo "No new database migrations were published, ${{ inputs.path }} was not updated" >> "$GITHUB_STEP_SUMMARY"
+          # Skip if new branch or non-push event without a 'before' SHA
+          if [[ -z "$EVENT_BEFORE" || "$EVENT_BEFORE" == "0000000000000000000000000000000000000000" ]]; then
+            echo "No changes detected in '$INPUT_PATH'. Nothing to publish."
+            echo "No new database migrations were published, $INPUT_PATH was not updated" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
-          git fetch --unshallow || true
-          git fetch origin "${{ github.event.before }}" "${{ github.sha }}"
+          git fetch origin "$EVENT_BEFORE" "$GITHUB_SHA"
 
-          if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- "${{ inputs.path }}"; then
-            echo "No changes detected in '${{ inputs.path }}'. Nothing to publish."
-            echo "No new database migrations were published, ${{ inputs.path }} was not updated" >> "$GITHUB_STEP_SUMMARY"
+          if git diff --quiet "$EVENT_BEFORE" "$GITHUB_SHA" -- "$INPUT_PATH"; then
+            echo "No changes detected in '$INPUT_PATH'. Nothing to publish."
+            echo "No new database migrations were published, $INPUT_PATH was not updated" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           else
-            echo "Changes detected in '${{ inputs.path }}'. Proceeding with upload."
+            echo "Changes detected in '$INPUT_PATH'. Proceeding with upload."
           fi
         else
-            echo "Force publish enabled. Skipping change check."
+          echo "Force publish enabled. Skipping change check."
         fi
 
-        # Create the migrations archive
-        mkdir -p output
-        migrations_file=output/migrations.tgz
-        tar -cvzf "${migrations_file}" "${{ inputs.path }}"
+        # Create the migrations archive outside the working tree
+        output_dir="${RUNNER_TEMP}/migrations-output"
+        mkdir -p "$output_dir"
+        migrations_file="${output_dir}/migrations.tgz"
+        tar -cvzf "$migrations_file" "$INPUT_PATH"
 
-        # Get the version
-        VERSION_TAG="${{ inputs.version }}"
-        if [ -z "$VERSION_TAG" ]; then
-          VERSION_TAG="${{ steps.version.outputs.tag }}"
+        # Resolve version
+        VERSION_TAG="${INPUT_VERSION:-$STEP_VERSION_TAG}"
+        if [[ -z "$VERSION_TAG" ]]; then
+          echo "Version tag could not be determined."
+          exit 1
         fi
-      
+
         # Generate metadata
-        sha256=$(sha256sum output/migrations.tgz | awk '{print $1}')
-        commit=$(git log -n 1 --pretty=format:%H --)
-        changeset_files="$(find ${{ inputs.path }} -type f -printf '%P\n' | jq -R . | jq -s .)"
-        metadata_file=output/migrations.metadata.json
+        sha256=$(sha256sum "$migrations_file" | awk '{print $1}')
+        commit=$(git rev-parse HEAD)
+        changeset_files=$(find "$INPUT_PATH" -type f -printf '%P\n' | jq -R . | jq -s .)
+        metadata_file="${output_dir}/migrations.metadata.json"
 
-        jq -n --argjson files "${changeset_files}" \
-              --arg version "${VERSION_TAG}" \
-              --arg sha256 "${sha256}" \
+        jq -n --argjson files "$changeset_files" \
+              --arg version "$VERSION_TAG" \
+              --arg sha256 "$sha256" \
               --arg date "$(date -Is)" \
-              --arg commit "${commit}" \
-              --arg path "${{ inputs.path }}" \
+              --arg commit "$commit" \
+              --arg path "$INPUT_PATH" \
               --arg format "db-migration-metadata:1.0.0" \
-              '{format: $format, files: $files, version: $version, sha256: $sha256, date: $date, path: $path, commit: $commit}' > "${metadata_file}"
+              '{format: $format, files: $files, version: $version, sha256: $sha256, date: $date, path: $path, commit: $commit}' > "$metadata_file"
 
-        # Upload it to S3
-
-
+        # Upload to S3
         echo "Publishing schema version ${VERSION_TAG}"
-        aws s3 cp "${migrations_file}" "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.tgz"
-        aws s3 cp "${metadata_file}" "s3://${{ inputs.bucket }}/${{ inputs.service-name }}/${VERSION_TAG}/migrations.metadata.json"
+        aws s3 cp "$migrations_file" "s3://${INPUT_BUCKET}/${INPUT_SERVICE_NAME}/${VERSION_TAG}/migrations.tgz"
+        aws s3 cp "$metadata_file" "s3://${INPUT_BUCKET}/${INPUT_SERVICE_NAME}/${VERSION_TAG}/migrations.metadata.json"
         echo "Published new database schema migration (Version: \`${VERSION_TAG}\`)" >> "$GITHUB_STEP_SUMMARY"
-
